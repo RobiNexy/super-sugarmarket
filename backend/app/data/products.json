@@ -1,0 +1,202 @@
+[
+  {
+    "id": 1,
+    "name": "农夫山泉 550ml",
+    "category": "饮品",
+    "description": "清清爽爽，拧开就能喝。",
+    "emoji": "💧",
+    "unit_price_fen": 200,
+    "stock_quantity": 12,
+    "is_active": true
+  },
+  {
+    "id": 2,
+    "name": "农夫山泉 1.5L",
+    "category": "饮品",
+    "description": "大瓶装，学习喝水不掉队。",
+    "emoji": "🚰",
+    "unit_price_fen": 400,
+    "stock_quantity": 8,
+    "is_active": true
+  },
+  {
+    "id": 3,
+    "name": "冰镇可乐 330ml",
+    "category": "饮品",
+    "description": "快乐气泡正在排队出场。",
+    "emoji": "🥤",
+    "stock_quantity": 10,
+    "unit_price_fen": 300,
+    "is_active": true
+  },
+  {
+    "id": 4,
+    "name": "冰红茶 500ml",
+    "category": "饮品",
+    "description": "甜甜茶香，给发呆加点伴奏。",
+    "emoji": "🧋",
+    "stock_quantity": 10,
+    "unit_price_fen": 300,
+    "is_active": true
+  },
+  {
+    "id": 5,
+    "name": "乳酸菌饮品",
+    "category": "饮品",
+    "description": "小小一瓶，酸甜刚刚好。",
+    "emoji": "🥛",
+    "stock_quantity": 8,
+    "unit_price_fen": 500,
+    "is_active": true
+  },
+  {
+    "id": 6,
+    "name": "乐事薯片 原味",
+    "category": "零食",
+    "description": "咔嚓一声，快乐就位。",
+    "emoji": "🥔",
+    "stock_quantity": 8,
+    "unit_price_fen": 600,
+    "is_active": true
+  },
+  {
+    "id": 7,
+    "name": "乐事薯片 黄瓜味",
+    "category": "零食",
+    "description": "清脆黄瓜味，脆得很有精神。",
+    "emoji": "🥒",
+    "stock_quantity": 8,
+    "unit_price_fen": 600,
+    "is_active": true
+  },
+  {
+    "id": 8,
+    "name": "辣条大礼包",
+    "category": "零食",
+    "description": "辣度请按自己的勇气拆封。",
+    "emoji": "🌶️",
+    "stock_quantity": 6,
+    "unit_price_fen": 1200,
+    "is_active": true
+  },
+  {
+    "id": 9,
+    "name": "奥利奥夹心饼干",
+    "category": "零食",
+    "description": "扭一扭、舔一舔，宿舍仪式感。",
+    "emoji": "🍪",
+    "stock_quantity": 8,
+    "unit_price_fen": 800,
+    "is_active": true
+  },
+  {
+    "id": 10,
+    "name": "草莓棒棒糖 ×5",
+    "category": "零食",
+    "description": "五颗甜甜的，分享或独享都行。",
+    "emoji": "🍭",
+    "stock_quantity": 12,
+    "unit_price_fen": 600,
+    "is_active": true
+  },
+  {
+    "id": 11,
+    "name": "桶装泡面 红烧牛肉",
+    "category": "泡面速食",
+    "description": "深夜赶作业的熟悉队友。",
+    "emoji": "🍜",
+    "stock_quantity": 10,
+    "unit_price_fen": 500,
+    "is_active": true
+  },
+  {
+    "id": 12,
+    "name": "袋装泡面 香辣味",
+    "category": "泡面速食",
+    "description": "香辣开胃，记得找个碗哦。",
+    "emoji": "🍲",
+    "stock_quantity": 10,
+    "unit_price_fen": 300,
+    "is_active": true
+  },
+  {
+    "id": 13,
+    "name": "自热小火锅",
+    "category": "泡面速食",
+    "description": "宿舍里的迷你热闹，按说明操作。",
+    "emoji": "🍲",
+    "stock_quantity": 5,
+    "unit_price_fen": 1800,
+    "is_active": true
+  },
+  {
+    "id": 14,
+    "name": "速冻水饺 一袋",
+    "category": "泡面速食",
+    "description": "冰箱里的小团圆，记得煮熟再吃。",
+    "emoji": "🥟",
+    "stock_quantity": 5,
+    "unit_price_fen": 1500,
+    "is_active": true
+  },
+  {
+    "id": 15,
+    "name": "一次性袜子",
+    "category": "日用品",
+    "description": "临时救急小帮手，轻装上阵。",
+    "emoji": "🧦",
+    "stock_quantity": 10,
+    "unit_price_fen": 400,
+    "is_active": true
+  },
+  {
+    "id": 16,
+    "name": "充电线 Type-C",
+    "category": "日用品",
+    "description": "手机电量告急时的续命搭档。",
+    "emoji": "🔌",
+    "stock_quantity": 6,
+    "unit_price_fen": 1000,
+    "is_active": true
+  },
+  {
+    "id": 17,
+    "name": "雨伞（质量不保证）",
+    "category": "日用品",
+    "description": "下雨先撑起来，老板替天气道歉。",
+    "emoji": "☂️",
+    "stock_quantity": 4,
+    "unit_price_fen": 2000,
+    "is_active": true
+  },
+  {
+    "id": 18,
+    "name": "创可贴 10 片",
+    "category": "日用品",
+    "description": "小磕小碰的贴心小助手。",
+    "emoji": "🩹",
+    "stock_quantity": 8,
+    "unit_price_fen": 500,
+    "is_active": true
+  },
+  {
+    "id": 19,
+    "name": "创可贴 草莓款",
+    "category": "日用品",
+    "description": "草莓图案很可爱，当前暂时售罄。",
+    "emoji": "🍓",
+    "stock_quantity": 0,
+    "unit_price_fen": 600,
+    "is_active": true
+  },
+  {
+    "id": 20,
+    "name": "洗衣液小袋装",
+    "category": "日用品",
+    "description": "小袋轻便，洗完衣服香香的。",
+    "emoji": "🧴",
+    "stock_quantity": 7,
+    "unit_price_fen": 700,
+    "is_active": true
+  }
+]

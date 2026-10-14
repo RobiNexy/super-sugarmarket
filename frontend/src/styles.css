@@ -1,0 +1,304 @@
+:root {
+  font-family: "Comic Sans MS", "Chalkboard SE", "KaiTi", cursive, sans-serif;
+  color: #2b2140;
+  background: #fff7e8;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  --ink: #2b2140;
+  --red: #ff5e5b;
+  --yellow: #ffb400;
+  --teal: #00c2a8;
+  --blue: #4d96ff;
+  --purple: #c34de0;
+  --pink: #ff7ac6;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background:
+    repeating-linear-gradient(0deg, transparent 0 3px, rgb(43 33 64 / 2.5%) 3px 4px),
+    linear-gradient(160deg, #fff7e8, #ffe9f2 55%, #e8f7ff);
+}
+
+button {
+  color: inherit;
+  font: inherit;
+}
+
+.shop-header {
+  position: relative;
+  z-index: 1;
+  padding: 26px 24px 48px;
+  background: var(--blue);
+  color: #fff;
+  text-align: center;
+  clip-path: polygon(
+    0 0, 100% 0, 100% 82%, 96% 100%, 92% 82%, 88% 100%, 84% 82%,
+    80% 100%, 76% 82%, 72% 100%, 68% 82%, 64% 100%, 60% 82%, 56% 100%,
+    52% 82%, 48% 100%, 44% 82%, 40% 100%, 36% 82%, 32% 100%, 28% 82%,
+    24% 100%, 20% 82%, 16% 100%, 12% 82%, 8% 100%, 4% 82%, 0 100%
+  );
+}
+
+.shop-header__logo {
+  display: inline-block;
+  padding: 5px 26px;
+  transform: rotate(-3deg);
+  border: 3px solid var(--ink);
+  border-radius: 8px 20px 10px 18px;
+  background: var(--ink);
+  box-shadow: 5px 5px 0 rgb(0 0 0 / 20%);
+  color: var(--yellow);
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 900;
+}
+
+.shop-header__slogan {
+  display: inline-block;
+  margin: 18px 0 0;
+  transform: rotate(1deg);
+  border: 3px solid var(--ink);
+  border-radius: 99px;
+  padding: 7px 20px;
+  background: #fff;
+  box-shadow: 3px 3px 0 var(--ink);
+  color: var(--ink);
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  font-weight: 900;
+}
+
+.shop-header__sparkle {
+  position: absolute;
+  top: 25%;
+  right: max(8%, calc((100vw - 1000px) / 2));
+  color: var(--yellow);
+  font-size: 2.5rem;
+}
+
+.shop-main {
+  position: relative;
+  z-index: 0;
+  width: min(1100px, 100%);
+  margin: 0 auto;
+  padding: 8px 24px 48px;
+}
+
+.section-title {
+  display: inline-block;
+  margin: 10px 0 4px;
+  transform: rotate(-1.5deg);
+  border: 3px solid var(--ink);
+  border-radius: 14px 4px 16px 6px;
+  padding: 7px 22px;
+  background: var(--pink);
+  box-shadow: 4px 4px 0 var(--ink);
+  font-size: clamp(1.3rem, 3vw, 1.7rem);
+}
+
+.category-list {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 24px 0 14px;
+}
+
+.category-pill,
+.jelly-button {
+  border: 3px solid var(--ink);
+  border-radius: 99px;
+  padding: 8px 18px;
+  background: #fff;
+  box-shadow: 3px 3px 0 var(--ink);
+  cursor: pointer;
+  font-weight: 900;
+  transition: transform 160ms ease, background-color 160ms ease;
+}
+
+.category-pill:hover,
+.jelly-button:hover {
+  transform: translateY(-3px) rotate(-2deg);
+}
+
+.category-pill--active {
+  background: var(--yellow);
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  padding: 14px 4px 8px;
+}
+
+.product-card {
+  position: relative;
+  min-width: 0;
+  transform: rotate(var(--card-tilt, 0deg));
+  border: 3px solid var(--ink);
+  border-radius: 6px 14px 8px 12px;
+  padding: 16px;
+  background: var(--card-color, #fff);
+  box-shadow: 5px 5px 0 var(--ink);
+  transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 220ms ease;
+}
+
+.product-card:nth-child(3n + 1) {
+  --card-tilt: -1deg;
+}
+
+.product-card:nth-child(3n) {
+  --card-tilt: 1deg;
+}
+
+.product-card:hover {
+  z-index: 1;
+  transform: rotate(0deg) translateY(-3px) scale(1.025);
+  box-shadow: 8px 8px 0 var(--ink);
+}
+
+.product-card::before {
+  position: absolute;
+  top: -11px;
+  left: 16px;
+  width: 74px;
+  height: 22px;
+  transform: rotate(-7deg);
+  border: 1px dashed rgb(43 33 64 / 30%);
+  background: rgb(255 255 255 / 55%);
+  content: "";
+}
+
+.product-card--drink {
+  --card-color: #dff0ff;
+}
+
+.product-card--snack {
+  --card-color: #ffe1ef;
+}
+
+.product-card--meal {
+  --card-color: #ffe1dc;
+}
+
+.product-card--daily {
+  --card-color: #d9fff6;
+}
+
+.product-card__emoji {
+  min-height: 92px;
+  padding: 12px 0;
+  text-align: center;
+  font-size: 3.4rem;
+  line-height: 1.2;
+  transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.product-card:hover .product-card__emoji {
+  transform: scale(1.12) rotate(-5deg);
+}
+
+.product-card__name {
+  margin: 4px 0 6px;
+  font-size: 1.05rem;
+  line-height: 1.35;
+}
+
+.product-card__description {
+  min-height: 2.8em;
+  margin: 0 0 10px;
+  color: rgb(43 33 64 / 80%);
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+
+.product-card__price {
+  margin: 8px 0 0;
+  color: #8030a0;
+  font-size: 1.35rem;
+  font-weight: 900;
+}
+
+.message-card {
+  width: min(580px, 100%);
+  margin: 28px auto;
+  border: 3px dashed var(--ink);
+  border-radius: 8px 20px 10px 18px;
+  padding: 22px;
+  background: rgb(255 255 255 / 88%);
+  box-shadow: 4px 4px 0 var(--ink);
+  text-align: center;
+  font-size: 1.08rem;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+.message-card--error .jelly-button {
+  margin-top: 12px;
+  background: var(--yellow);
+}
+
+.shop-footer {
+  margin-top: 20px;
+  border-top: 4px solid var(--ink);
+  padding: 26px 18px 34px;
+  background: var(--purple);
+  color: #fff;
+  text-align: center;
+  font-weight: 800;
+}
+
+.shop-footer p {
+  margin: 7px 0;
+}
+
+@media (max-width: 860px) {
+  .product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .shop-header {
+    padding: 22px 14px 40px;
+  }
+
+  .shop-header__sparkle {
+    top: 18%;
+    right: 5%;
+    font-size: 1.6rem;
+  }
+
+  .shop-main {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+
+  .category-list {
+    gap: 9px;
+  }
+
+  .category-pill {
+    padding: 7px 13px;
+  }
+
+  .product-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

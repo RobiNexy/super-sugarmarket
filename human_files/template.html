@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>SugarMarket · 苏格公寓楼下的小卖部有网站啦</title>
+<style>
+/* ============ 0. 色板与基线 ============ */
+:root{
+  --red:#FF5E5B; --yellow:#FFB400; --teal:#00C2A8;
+  --blue:#4D96FF; --purple:#C34DE0; --pink:#FF7AC6; --pink-d:#E5489E;
+  --ink:#2B2140; --mod:12px;
+  --rot:0deg; --dx:0px; --dy:0px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:"Comic Sans MS","Chalkboard SE","楷体",cursive,sans-serif;
+  color:var(--ink);overflow-x:hidden;
+  background:
+    repeating-linear-gradient(0deg,transparent 0 3px,rgba(43,33,64,.025) 3px 4px),
+    linear-gradient(160deg,#FFF7E8,#FFE9F2 55%,#E8F7FF);
+}
+/* 关键修复：默认保留系统光标；JS 确认自定义光标已就绪后才加 candy-on */
+body.candy-on, body.candy-on button, body.candy-on a{cursor:none}
+body.candy-on input, body.candy-on textarea{cursor:text} /* 输入框保留文本光标 */
+button{font:inherit}
+
+/* ============ 0.5 粉色糖果光标 ============ */
+#cursor{
+  position:fixed;left:-100px;top:-100px;z-index:9999;pointer-events:none;
+  width:26px;height:26px;margin:-13px 0 0 -13px;
+  border-radius:50%;
+  background:radial-gradient(circle at 32% 28%, #fff 0 18%,
+    #FFD3EC 22%, var(--pink) 55%, var(--pink-d) 100%);
+  border:2.5px solid var(--ink);
+  box-shadow:2px 3px 0 rgba(43,33,64,.35), inset -3px -4px 0 rgba(229,72,158,.55);
+  transition:transform .12s ease-out;
+  display:none;
+}
+body.candy-on #cursor{display:block}
+#cursor .stick{ /* 棒棒糖棍 */
+  position:absolute;left:50%;top:100%;width:4px;height:16px;
+  background:linear-gradient(#fff,#E8D9C8);border:1.5px solid var(--ink);
+  border-radius:0 0 4px 4px;transform:translateX(-50%) rotate(8deg);transform-origin:top;
+}
+#cursor.press{transform:scale(.75) rotate(-12deg)}      /* 点击压扁 */
+#cursor.hovering{transform:scale(1.45) rotate(8deg)}    /* 悬停可点元素放大 */
+#cursor-ring{ /* 惰性跟随的糖果圈 */
+  position:fixed;left:-100px;top:-100px;z-index:9998;pointer-events:none;
+  width:44px;height:44px;margin:-22px 0 0 -22px;
+  border:3px dashed var(--pink-d);border-radius:50%;opacity:.55;display:none;
+  transition:left .18s ease-out,top .18s ease-out,transform .18s;
+}
+body.candy-on #cursor-ring{display:block}
+#cursor-ring.hov{transform:scale(1.3);border-style:solid;border-color:var(--purple)}
+
+/* ============ 1. 商品卡 ============ */
+.card{
+  position:relative;border:3px solid var(--ink);border-radius:6px 14px 8px 12px;
+  padding:var(--mod);box-shadow:5px 5px 0 var(--ink);
+  background:
+    conic-gradient(from 30deg at 30% 20%, rgba(255,255,255,.35) 0 25%, transparent 25% 50%, rgba(255,255,255,.2) 50% 75%, transparent 75%),
+    var(--card-c,#fff);
+  transform:rotate(var(--rot)) translate(var(--dx),var(--dy));
+  transition:transform .25s cubic-bezier(.34,1.56,.64,1),box-shadow .25s,filter .25s;
+  animation:cardin .5s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes cardin{from{opacity:0;transform:scale(.6) rotate(10deg)}to{opacity:1}}
+.card:hover{transform:rotate(0deg) translate(0,0) scale(1.04);box-shadow:8px 8px 0 var(--ink);filter:saturate(1.2)}
+.card::before{content:"";position:absolute;top:-12px;left:14px;width:74px;height:24px;
+  background:rgba(255,255,255,.5);border:1px dashed rgba(43,33,64,.3);transform:rotate(-8deg)}
+.card::after{content:"✦";position:absolute;top:-14px;right:-10px;font-size:26px;color:var(--yellow);
+  opacity:0;transform:scale(0) rotate(-90deg);transition:opacity .2s,transform .3s cubic-bezier(.34,1.56,.64,1)}
+.card:hover::after{opacity:1;transform:scale(1) rotate(0deg)}
+.card.hero{transform:rotate(calc(var(--rot) - 4deg)) scale(1.08);z-index:2}
+.card .emoji{font-size:58px;text-align:center;padding:14px 0;transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
+.card:hover .emoji{transform:scale(1.2) rotate(-8deg)}
+.card h3{font-size:16px;line-height:1.3}
+.card .price{font-size:21px;font-weight:900}
+.card .price::before{content:"¥ ";font-size:13px}
+.jelly{border:3px solid var(--ink);border-radius:99px;background:#fff;font-weight:900;
+  padding:7px 16px;box-shadow:3px 3px 0 var(--ink);transition:transform .15s}
+.jelly:hover{animation:jelly .5s}
+@keyframes jelly{0%{transform:scale(1)}30%{transform:scale(1.15)}60%{transform:scale(.95)}100%{transform:scale(1)}}
+.jelly:active{transform:translateY(3px);box-shadow:0 0 0 var(--ink)}
+
+/* ============ 2. 品类药丸 ============ */
+.pill{border:3px solid var(--ink);border-radius:99px;background:#fff;padding:7px 18px;
+  font-weight:900;position:relative;transition:transform .2s}
+.pill:hover{transform:translateY(-3px) rotate(-2deg)}
+.pill.on{background:var(--yellow)}
+.pill svg{position:absolute;inset:-9px;width:calc(100% + 18px);height:calc(100% + 18px);pointer-events:none;overflow:visible}
+.pill svg path{fill:none;stroke:var(--purple);stroke-width:3;stroke-linecap:round;stroke-dasharray:600;stroke-dashoffset:600}
+.pill.on svg path{animation:draw .4s forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+
+/* ============ 3. 页眉 ============ */
+header{position:relative;background:var(--blue);color:#fff;padding:18px 24px 34px;
+  text-align:center;z-index:10;
+  clip-path:polygon(0 0,100% 0,100% 78%,97% 100%,94% 80%,91% 100%,88% 80%,85% 100%,82% 80%,79% 100%,76% 80%,73% 100%,70% 80%,67% 100%,64% 80%,61% 100%,58% 80%,55% 100%,52% 80%,49% 100%,46% 80%,43% 100%,40% 80%,37% 100%,34% 80%,31% 100%,28% 80%,25% 100%,22% 80%,19% 100%,16% 80%,13% 100%,10% 80%,7% 100%,4% 80%,0 100%)}
+.logo{display:inline-block;font-size:clamp(30px,4.5vw,54px);font-weight:900;color:var(--yellow);
+  background:var(--ink);padding:4px 26px;border-radius:8px 20px 10px 18px;
+  transform:rotate(-3deg);box-shadow:5px 5px 0 rgba(0,0,0,.25);animation:wob 3.5s ease-in-out infinite}
+@keyframes wob{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(2deg) translateY(-4px)}}
+#slogan{display:inline-block;margin-top:14px;font-size:19px;font-weight:900;background:#fff;
+  color:var(--ink);padding:6px 20px;border:3px solid var(--ink);border-radius:99px;
+  transform:rotate(1deg);box-shadow:3px 3px 0 var(--ink)}
+#slogan b{display:inline-block;animation:charin .3s cubic-bezier(.34,1.56,.64,1) both}
+@keyframes charin{from{opacity:0;transform:translateY(-14px) scale(.4)}to{opacity:1}}
+.hbar{position:absolute;top:12px;right:20px;display:flex;gap:10px;z-index:20}
+.hbtn{background:#fff;color:var(--ink);border:3px solid var(--ink);border-radius:99px;
+  padding:6px 16px;font-weight:900;box-shadow:3px 3px 0 var(--ink);transition:transform .15s}
+.hbtn:hover{transform:rotate(-2deg) scale(1.07)}
+#cart-count{display:inline-block;min-width:24px;background:var(--red);color:#fff;border-radius:99px;
+  border:2px solid var(--ink);font-size:13px;animation:pop .4s cubic-bezier(.34,1.56,.64,1)}
+@keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.4)}100%{transform:scale(1)}}
+
+/* ============ 4. 网格 ============ */
+.cats{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;padding:22px 16px}
+main{max-width:1100px;margin:0 auto;padding:0 24px 40px;position:relative;z-index:1}
+.rack{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--mod);padding-top:10px}
+@media(max-width:860px){.rack{grid-template-columns:repeat(2,1fr)}}
+.section-title{display:inline-block;font-size:26px;font-weight:900;background:var(--pink);
+  padding:6px 22px;border:3px solid var(--ink);border-radius:14px 4px 16px 6px;
+  box-shadow:4px 4px 0 var(--ink);transform:rotate(-1.5deg);margin:10px 0 4px}
+
+/* ============ 5. 购物车小票 ============ */
+.receipt{background:#fff;padding:22px 20px;max-width:560px;margin:0 auto;--z:12px;
+  -webkit-mask:conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) 50%/var(--z) 100% exclude,
+              conic-gradient(from 135deg at top,#0000,#000 1deg 89deg,#0000 90deg) 50%/var(--z) 100% exclude,
+              linear-gradient(#000 0 0);
+  mask:conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) 50%/var(--z) 100% exclude,
+       conic-gradient(from 135deg at top,#0000,#000 1deg 89deg,#0000 90deg) 50%/var(--z) 100% exclude,
+       linear-gradient(#000 0 0);
+  border-top:3px dashed var(--ink);border-bottom:3px dashed var(--ink);
+  font-family:"Courier New",monospace}
+.receipt h2{text-align:center;letter-spacing:4px;margin-bottom:14px}
+.rrow{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px dashed rgba(43,33,64,.3)}
+.rrow .nm{flex:1;font-weight:bold}
+.rrow .u{color:var(--purple);font-weight:900}
+.step{display:flex;border:2px solid var(--ink);border-radius:99px;overflow:hidden}
+.step button{border:none;background:transparent;width:30px;height:30px;font-weight:900;transition:background .15s}
+.step button:hover{background:var(--yellow)}
+.step .num{width:36px;display:flex;align-items:center;justify-content:center;
+  border:2px solid var(--ink);border-radius:99px;background:#fff}
+.rrow .del{border:none;background:none;font-size:18px}
+.rtotal{text-align:center;font-size:24px;font-weight:900;margin-top:16px;letter-spacing:1px}
+.empty{text-align:center;font-size:20px;font-weight:bold;padding:40px 0}
+.bigbtn{display:block;margin:24px auto 0;background:var(--teal);border:3px solid var(--ink);
+  border-radius:99px;padding:14px 40px;font-size:20px;font-weight:900;
+  box-shadow:5px 5px 0 var(--ink);transition:transform .15s}
+.bigbtn:hover{transform:translateY(-3px) rotate(-1deg)}
+
+/* ============ 6. 结算 ============ */
+.frm{max-width:520px;margin:0 auto}
+.fld{margin-bottom:22px}
+.fld label{display:inline-block;font-weight:900;background:var(--yellow);border:3px solid var(--ink);
+  border-radius:99px;padding:4px 16px;margin-bottom:8px;transform:rotate(-1deg);box-shadow:3px 3px 0 var(--ink)}
+.fld input,.fld textarea{width:100%;font:inherit;font-size:17px;padding:12px 16px;outline:none;
+  border:3px dashed var(--ink);border-radius:4px 16px 6px 14px;background:rgba(255,255,255,.85);transition:box-shadow .2s}
+.fld input:focus,.fld textarea:focus{filter:url(#wobble);box-shadow:5px 5px 0 rgba(195,77,224,.35);background:#fff}
+.fld .hint{font-size:13px;margin-top:5px;opacity:.75}
+.paynote{background:var(--pink);border:3px solid var(--ink);border-radius:6px 18px 8px 14px;
+  padding:14px;font-weight:bold;box-shadow:4px 4px 0 var(--ink);transform:rotate(.5deg);margin-bottom:24px}
+#submit-btn{background:var(--red);color:#fff;width:100%;font-size:24px;padding:20px;border:4px solid var(--ink);
+  border-radius:99px;box-shadow:6px 6px 0 var(--ink);position:relative;overflow:hidden;
+  animation:breath 2.4s ease-in-out infinite}
+@keyframes breath{0%,100%{transform:scale(1)}50%{transform:scale(1.035)}}
+#submit-btn b{display:inline-block;animation:hop 1.6s ease-in-out infinite;animation-delay:calc(var(--i)*.09s)}
+@keyframes hop{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+#submit-btn::after{content:"";position:absolute;top:0;left:-70%;width:45%;height:100%;
+  background:linear-gradient(105deg,transparent,rgba(255,255,255,.6),transparent);
+  animation:shine 2.2s linear infinite}
+@keyframes shine{to{left:130%}}
+#submit-btn:hover{animation:breath 1s ease-in-out infinite}
+.err{border-color:var(--red)!important;animation:shake .3s}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+/* ============ 7. 成功页 ============ */
+#p-success{text-align:center;padding-top:50px}
+.okbig{font-size:110px;display:inline-block;animation:ok .8s cubic-bezier(.34,1.56,.64,1)}
+@keyframes ok{0%{transform:scale(0) rotate(-200deg)}60%{transform:scale(1.3)}100%{transform:scale(1)}}
+.okcard{display:inline-block;background:#fff;border:4px solid var(--ink);border-radius:8px 22px 10px 18px;
+  padding:30px 46px;box-shadow:8px 8px 0 var(--teal);transform:rotate(-1deg)}
+.okcard h2{font-size:30px;margin-bottom:10px}
+
+/* ============ 8. 背景涂鸦 / 页脚 ============ */
+#doodles{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+#doodles svg{position:absolute;opacity:.5}
+footer{position:relative;margin-top:60px;background:var(--purple);color:#fff;
+  padding:40px 24px 70px;text-align:center;border-top:4px solid var(--ink)}
+.qr{display:inline-block;background:#fff;color:var(--ink);padding:16px;border:3px solid var(--ink);
+  transform:rotate(-4deg);box-shadow:5px 5px 0 rgba(0,0,0,.3);position:relative;transition:transform .2s}
+.qr:hover{animation:qrshake .4s}
+@keyframes qrshake{0%,100%{transform:rotate(-4deg)}25%{transform:rotate(-1deg)}75%{transform:rotate(-6deg)}}
+.qr::before{content:"";position:absolute;top:-10px;left:20px;width:60px;height:20px;
+  background:rgba(255,255,255,.55);transform:rotate(-6deg);border:1px dashed rgba(43,33,64,.3)}
+.qr .grid{display:grid;grid-template-columns:repeat(7,10px);grid-auto-rows:10px;gap:2px;margin:6px 0}
+.qr .grid i{background:var(--ink)}
+.qr .grid i.w{background:#fff}
+footer p{font-weight:bold;margin:14px 0}
+.arrow{font-size:34px;display:inline-block;animation:pt 1s ease-in-out infinite alternate}
+@keyframes pt{to{transform:translateX(10px) rotate(8deg)}}
+
+#fx{position:fixed;inset:0;pointer-events:none;z-index:9990}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  #cursor-ring{display:none!important}
+}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" aria-hidden="true">
+  <filter id="wobble"><feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" result="n"/>
+  <feDisplacementMap in="SourceGraphic" in2="n" scale="3"/></filter>
+</svg>
+
+<div id="doodles"></div>
+<div id="cursor"><span class="stick"></span></div>
+<div id="cursor-ring"></div>
+<canvas id="fx"></canvas>
+
+<header>
+  <div class="hbar">
+    <button class="hbtn" id="fx-toggle">🔔 音效：开</button>
+    <button class="hbtn" id="nav-cart">🛒 篮子 <span id="cart-count">0</span></button>
+  </div>
+  <div class="logo">SugarMarket</div><br>
+  <span id="slogan"></span>
+</header>
+
+<nav class="cats" id="cats"></nav>
+
+<main>
+  <section class="page" id="p-shop">
+    <h2 class="section-title">🛍️ 今天货架上有什么</h2>
+    <div class="rack" id="rack"></div>
+  </section>
+  <section class="page" id="p-cart" style="display:none">
+    <h2 class="section-title">🧾 小票（还没付钱！）</h2>
+    <div id="cart-body"></div>
+  </section>
+  <section class="page" id="p-checkout" style="display:none">
+    <h2 class="section-title">📝 最后一步</h2>
+    <div class="frm" style="margin-top:20px">
+      <div class="paynote">💵 本店没有线上支付：老板把货送到门口，你当面扫码付款，童叟无欺。</div>
+      <div class="fld" id="f-room"><label>🏠 房间号 *</label>
+        <input id="in-room" placeholder="例如：8 楼 802（有电梯！）">
+        <div class="hint">写清楚点，老板腿短但记性很好。</div></div>
+      <div class="fld" id="f-phone"><label>📞 电话号 *</label>
+        <input id="in-phone" maxlength="11" placeholder="11 位手机号，到了你好下楼">
+        <div class="hint">老板只用来喊你拿货，绝不推销。</div></div>
+      <div class="fld"><label>💬 备注（选填）</label>
+        <textarea id="in-note" rows="3" placeholder="可乐要冰的；家里有只很凶的猫请敲门别按铃……"></textarea></div>
+      <button id="submit-btn"></button>
+    </div>
+  </section>
+  <section class="page" id="p-success" style="display:none">
+    <div class="okbig">🎉</div><br>
+    <div class="okcard">
+      <h2>老板收到啦！</h2>
+      <p>已通知老板，稍后送到。<br>10 分钟没到？拨 <b>138-xxxx-xxxx</b>。</p>
+      <p style="margin-top:10px;color:var(--purple);font-weight:bold">（演示网站，老板并不存在 🥲）</p>
+      <button class="bigbtn" id="back-shop" style="background:var(--yellow)">🍭 继续逛</button>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <span class="arrow">👉</span>
+  <div class="qr"><b>当面扫码 · 付给老板</b>
+    <div class="grid" id="qrgrid"></div><small>（假码，扫了也没钱）</small></div>
+  <p>老板就在楼下，跑得很快 🏃 · SugarMarket · 苏格公寓 B1</p>
+  <p>© 2024 — 丑萌即正义，蜡笔即真理 🖍️</p>
+</footer>
+
+<script>
+/* ================= 数据 ================= */
+const GOODS=[
+ {n:"农夫山泉 550ml",p:2,e:"💧",c:"饮品"},{n:"农夫山泉 1.5L",p:4,e:"🚰",c:"饮品"},
+ {n:"冰镇可乐 330ml",p:3,e:"🥤",c:"饮品",hero:1},{n:"冰红茶 500ml",p:3.5,e:"🧋",c:"饮品"},
+ {n:"乳酸菌饮品",p:5,e:"🥛",c:"饮品"},{n:"乐事薯片 原味",p:6,e:"🥔",c:"零食"},
+ {n:"乐事薯片 黄瓜味",p:6,e:"🥒",c:"零食"},{n:"辣条大礼包",p:12,e:"🌶️",c:"零食",hero:1},
+ {n:"奥利奥夹心饼干",p:8,e:"🍪",c:"零食"},{n:"草莓棒棒糖 ×5",p:6,e:"🍭",c:"零食"},
+ {n:"桶装泡面 红烧牛肉",p:5,e:"🍜",c:"泡面速食"},{n:"袋装泡面 香辣味",p:3,e:"🍲",c:"泡面速食"},
+ {n:"自热小火锅",p:18,e:"🍲",c:"泡面速食",hero:1},{n:"速冻水饺 一袋",p:15,e:"🥟",c:"泡面速食"},
+ {n:"一次性袜子",p:4,e:"🧦",c:"日用品"},{n:"充电线 Type-C",p:10,e:"🔌",c:"日用品"},
+ {n:"雨伞（质量不保证）",p:20,e:"☂️",c:"日用品"},{n:"创可贴 10 片",p:5,e:"🩹",c:"日用品"},
+ {n:"创可贴 草莓款",p:6,e:"🍓",c:"日用品",sold:1},{n:"洗衣液小袋装",p:7,e:"🧴",c:"日用品"},
+];
+const CATS=["全部","饮品","零食","泡面速食","日用品"];
+const CCOLOR={全部:"var(--yellow)",饮品:"var(--blue)",零食:"var(--pink)","泡面速食":"var(--red)",日用品:"var(--teal)"};
+const CEMO={全部:"🌈",饮品:"🥤",零食:"🍪","泡面速食":"🍜",日用品:"🧴"};
+const YELLS=["老板送货上门，当面扫码付款！","今日特价：草莓味的一切 🍓","下楼倒垃圾顺便看看橱窗嘛","小卖部有网站啦，老板也不知道怎么做到的","雨伞质量不保证，但老板人很好","哼，本店拒绝精装修，只卖真感情"];
+let cart={},cat="全部",sndOn=true;
+const $=s=>document.querySelector(s),rnd=(a,b)=>a+Math.random()*(b-a);
+window.__candyFx=true;
+const fxOK=()=>window.__candyFx&&!matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ================= 粉色糖果光标（修复版） =================
+   关键：先渲染光标并确认位置，再隐藏系统光标；鼠标离开窗口时
+   恢复系统光标，杜绝「无鼠标」真空。 */
+const cur=$("#cursor"),ring=$("#cursor-ring");
+let cx=0,cy=0,rx=0,ry=0,curReady=false;
+const isInteractive=el=>!!el.closest("button,.pill,.card,.qr,a,[data-c]");
+document.addEventListener("mousemove",e=>{
+  cx=e.clientX;cy=e.clientY;
+  if(!curReady){ // 第一次移动：先摆好位置，下一帧才加 candy-on，避免闪失
+    cur.style.left=cx+"px";cur.style.top=cy+"px";
+    requestAnimationFrame(()=>{document.body.classList.add("candy-on");curReady=true;});
+  }
+  const hov=isInteractive(e.target);
+  cur.classList.toggle("hovering",hov);
+  ring.classList.toggle("hov",hov);
+});
+document.addEventListener("mouseleave",()=>{ // 鼠标离开页面 → 还原生光标
+  document.body.classList.remove("candy-on");curReady=false;
+});
+document.addEventListener("mouseenter",()=>{ if(curReady)return; /* 等 mousemove 再激活 */ });
+document.addEventListener("mousedown",()=>cur.classList.add("press"));
+document.addEventListener("mouseup",()=>cur.classList.remove("press"));
+(function curLoop(){ // 光标即时跟随 + 糖果圈惰性跟随
+  cur.style.left=cx+"px";cur.style.top=cy+"px";
+  rx+=(cx-rx)*.16;ry+=(cy-ry)*.16;
+  ring.style.left=rx+"px";ring.style.top=ry+"px";
+  requestAnimationFrame(curLoop);
+})();
+/* 粉色蜡笔轨迹（糖果三色） */
+const cvs=$("#fx"),ctx=cvs.getContext("2d");
+function fit(){cvs.width=innerWidth;cvs.height=innerHeight}fit();onresize=fit;
+let trail=[];
+onmousemove=e=>{if(fxOK()){trail.push({x:e.clientX,y:e.clientY,a:1});if(trail.length>40)trail.shift();}};
+(function trailLoop(){
+  ctx.clearRect(0,0,cvs.width,cvs.height);
+  if(fxOK())trail.forEach((p,i)=>{p.a-=.02;if(p.a<=0)return;
+    ctx.globalAlpha=p.a*.6;ctx.fillStyle=["#FF7AC6","#FFD3EC","#E5489E"][i%3];
+    ctx.beginPath();ctx.arc(p.x,p.y,5*p.a+1,0,7);ctx.fill();});
+  trail=trail.filter(p=>p.a>0);ctx.globalAlpha=1;requestAnimationFrame(trailLoop);
+})();
+
+/* ================= 音效 / 粒子 / 涟漪 ================= */
+let AC=null;
+function beep(type){
+  if(!sndOn||!fxOK())return;
+  try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+    if(AC.state==="suspended")AC.resume();
+    const o=AC.createOscillator(),g=AC.createGain();o.connect(g);g.connect(AC.destination);
+    const t=AC.currentTime;
+    if(type==="pop"){o.frequency.setValueAtTime(300,t);o.frequency.exponentialRampToValueAtTime(700,t+.09);
+      g.gain.setValueAtTime(.15,t);g.gain.exponentialRampToValueAtTime(.001,t+.12);o.start(t);o.stop(t+.13);}
+    else{o.frequency.setValueAtTime(660,t);o.frequency.setValueAtTime(880,t+.1);
+      g.gain.setValueAtTime(.18,t);g.gain.exponentialRampToValueAtTime(.001,t+.4);o.start(t);o.stop(t+.4);}
+  }catch(e){}
+}
+$("#fx-toggle").onclick=e=>{sndOn=!sndOn;e.target.textContent=sndOn?"🔔 音效：开":"🔕 音效：关";};
+let parts=[];
+function burst(x,y,n,confetti){
+  for(let i=0;i<(confetti?120:n);i++)parts.push({x,y,vx:rnd(-4,4)*(confetti?1.5:1),vy:rnd(-7,-2),
+    g:confetti?.18:.25,s:rnd(4,confetti?10:8),r:rnd(0,6),vr:rnd(-.2,.2),a:1,
+    c:["#FF5E5B","#FFB400","#00C2A8","#4D96FF","#C34DE0","#FF7AC6"][Math.random()*6|0]});
+}
+(function partsLoop(){
+  ctx.clearRect(0,0,cvs.width,cvs.height);
+  parts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=p.g;p.r+=p.vr;p.a-=.012;
+    ctx.save();ctx.globalAlpha=Math.max(p.a,0);ctx.translate(p.x,p.y);ctx.rotate(p.r);
+    ctx.fillStyle=p.c;ctx.fillRect(-p.s/2,-p.s/2,p.s,p.s*.7);ctx.restore();});
+  parts=parts.filter(p=>p.a>0&&p.y<cvs.height+30);requestAnimationFrame(partsLoop);
+})();
+document.addEventListener("click",e=>{
+  if(!fxOK())return;
+  const r=document.createElement("div");
+  r.style.cssText=`position:fixed;left:${e.clientX}px;top:${e.clientY}px;width:14px;height:14px;
+   border:3px solid ${["#FF7AC6","#FFB400","#4D96FF"][Math.random()*3|0]};border-radius:99px;
+   pointer-events:none;z-index:9989;transform:translate(-50%,-50%)`;
+  document.body.appendChild(r);
+  r.animate([{transform:"translate(-50%,-50%) scale(1)",opacity:1},
+             {transform:"translate(-50%,-50%) scale(5)",opacity:0}],{duration:450,easing:"ease-out"})
+   .onfinish=()=>r.remove();
+},true);
+
+/* ================= 背景涂鸦视差 ================= */
+const DOODLES=[
+ {p:"M10 30 A20 20 0 1 1 50 30 A20 20 0 1 1 10 30 M20 5 L24 0 M30 2 L31 -4 M40 5 L44 0",w:70,c:"#FFB400"},
+ {p:"M20 0 L8 22 L18 22 L12 44 L34 16 L22 16 L30 0 Z",w:60,c:"#4D96FF"},
+ {p:"M0 10 Q12 0 24 10 T48 10 T72 10 T96 10",w:90,c:"#00C2A8"},
+ {p:"M0 20 L70 20 M70 20 L58 8 M70 20 L58 32",w:90,c:"#FF5E5B"},
+ {p:"M10 40 L30 0 L50 40 Z M50 40 L70 10 L90 40 Z",w:100,c:"#C34DE0"},
+];
+const layers=[[],[],[]],speeds=[.01,.02,.04];
+for(let L=0;L<3;L++)for(let i=0;i<7;i++){
+  const d=DOODLES[Math.random()*DOODLES.length|0];
+  const s=document.createElementNS("http://www.w3.org/2000/svg","svg");
+  s.setAttribute("viewBox","-5 -10 110 60");s.style.width=d.w*(L+1)*.7+"px";
+  s.innerHTML=`<path d="${d.p}" fill="none" stroke="${d.c}" stroke-width="4" stroke-linecap="round"/>`;
+  s.style.left=rnd(0,92)+"%";s.style.top=rnd(0,95)+"%";
+  $("#doodles").appendChild(s);
+  layers[L].push({el:s,base:rnd(0,50)});
+}
+let mx=0,my=0;
+onmousemove=e=>{mx=e.clientX/innerWidth-.5;my=e.clientY/innerHeight-.5;};
+(function para(){
+  if(fxOK())layers.forEach((ls,L)=>ls.forEach(o=>{
+    o.el.style.transform=`translate(${(-mx*100*speeds[L]).toFixed(1)}px,${(-my*70*speeds[L]+Math.sin(Date.now()/2000+o.base)*10).toFixed(1)}px)`;}));
+  requestAnimationFrame(para);
+})();
+
+/* ================= 吆喝语 / 渲染 ================= */
+function setSlogan(){
+  const y=YELLS[Math.random()*YELLS.length|0];
+  $("#slogan").innerHTML=[...y].map((c,i)=>`<b style="animation-delay:${i*.035}s">${c}</b>`).join("");
+}
+setSlogan();setInterval(setSlogan,8000);
+function show(id){
+  document.querySelectorAll(".page").forEach(p=>p.style.display="none");
+  $("#"+id).style.display="block";scrollTo({top:0,behavior:"smooth"});
+}
+function renderCats(){
+  $("#cats").innerHTML=CATS.map(c=>`
+    <button class="pill ${c===cat?"on":""}" data-c="${c}">${CEMO[c]} ${c}
+      <svg viewBox="0 0 100 40" preserveAspectRatio="none">
+        <path d="M6 22 C10 6, 55 2, 78 8 C96 13, 98 28, 72 34 C45 40, 8 38, 6 22 Z" vector-effect="non-scaling-stroke"/></svg></button>`).join("");
+}
+function renderRack(){
+  const list=GOODS.filter(g=>cat==="全部"||g.c===cat);
+  $("#rack").innerHTML=list.map((g,i)=>
+    `<article class="card ${g.hero?"hero":""}" style="--rot:${rnd(-2,2).toFixed(2)}deg;--dx:${rnd(-4,4).toFixed(1)}px;--dy:${rnd(-4,4).toFixed(1)}px;--card-c:${CCOLOR[g.c]};animation-delay:${i*.04}s">
+      ${g.sold?'<b style="position:absolute;top:8px;right:-6px;background:var(--red);color:#fff;padding:2px 10px;border:2px solid var(--ink);transform:rotate(5deg);font-size:12px">售罄</b>':""}
+      <div class="emoji">${g.e}</div><h3>${g.n}</h3>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
+        <span class="price">${g.p.toFixed(1)}</span>
+        <button class="jelly add" data-n="${g.n}" ${g.sold?"disabled style='opacity:.5'":""}>${g.sold?"没了":"＋ 放篮子"}</button>
+      </div></article>`).join("");
+}
+function renderCart(){
+  const items=Object.entries(cart);
+  $("#cart-count").textContent=items.reduce((s,[,q])=>s+q,0);
+  $("#cart-count").style.animation="none";void $("#cart-count").offsetWidth;
+  $("#cart-count").style.animation="pop .4s";
+  if(!items.length){$("#cart-body").innerHTML=`<p class="empty">篮子空空如也 🫙 快去塞点零食！</p>`;return;}
+  const total=items.reduce((s,[n,q])=>s+GOODS.find(x=>x.n===n).p*q,0);
+  $("#cart-body").innerHTML=`<div class="receipt"><h2>✂️ - - - SUGAR MARKET - - -</h2>`+
+    items.map(([n,q])=>{const g=GOODS.find(x=>x.n===n);return `
+      <div class="rrow"><span style="font-size:26px">${g.e}</span>
+        <span class="nm">${n}<br><small class="u">¥${g.p.toFixed(1)} × ${q}</small></span>
+        <span class="step"><button data-a="-" data-n="${n}">−</button><span class="num">${q}</span><button data-a="+" data-n="${n}">＋</button></span>
+        <button class="del" data-a="del" data-n="${n}">🗑️</button></div>`;}).join("")+
+    `<div class="rtotal">合计 ¥${total.toFixed(1)}<br><small>（当面付，先不收钱）</small></div>
+     <button class="bigbtn" id="go-pay">👉 去结算，叫老板送货</button></div>`;
+}
+$("#submit-btn").innerHTML=[..."🛵 叫老板送货！"].map((c,i)=>`<b style="--i:${i}">${c}</b>`).join("");
+
+/* ================= 事件 ================= */
+$("#cats").addEventListener("click",e=>{
+  const b=e.target.closest(".pill");if(!b)return;cat=b.dataset.c;renderCats();renderRack();});
+$("#rack").addEventListener("click",e=>{
+  const b=e.target.closest(".add");if(!b||b.disabled)return;
+  cart[b.dataset.n]=(cart[b.dataset.n]||0)+1;
+  const r=b.getBoundingClientRect();burst(r.left+r.width/2,r.top,10);beep("pop");
+  const t=b.textContent;b.textContent="✓ 啵！";setTimeout(()=>b.textContent=t,700);
+});
+$("#nav-cart").onclick=()=>{renderCart();show("p-cart")};
+$("#cart-body").addEventListener("click",e=>{
+  const b=e.target.closest("button");
+  if(e.target.id==="go-pay"){show("p-checkout");return;}
+  if(!b)return;const n=b.dataset.n;
+  if(b.dataset.a==="+")cart[n]++;
+  if(b.dataset.a==="-"){cart[n]--;if(cart[n]<=0)delete cart[n];}
+  if(b.dataset.a==="del")delete cart[n];
+  renderCart();beep("pop");
+});
+["#in-room","#in-phone"].forEach(s=>$(s).addEventListener("input",()=>$(s).classList.remove("err")));
+$("#submit-btn").onclick=()=>{
+  const okR=$("#in-room").value.trim().length>0;
+  const okP=/^1\d{10}$/.test($("#in-phone").value.trim());
+  if(!okR)$("#in-room").classList.add("err");
+  if(!okP)$("#in-phone").classList.add("err");
+  if(!okR||!okP)return;
+  cart={};show("p-success");burst(innerWidth/2,innerHeight/3,0,true);beep("ding");
+};
+$("#back-shop").onclick=()=>show("p-shop");
+$("#qrgrid").innerHTML=Array.from({length:49},()=>`<i class="${Math.random()<.5?"":"w"}"></i>`).join("");
+
+renderCats();renderRack();
+</script>
+</body>
+</html>

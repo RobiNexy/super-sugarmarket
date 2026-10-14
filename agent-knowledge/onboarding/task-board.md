@@ -4,26 +4,28 @@
 
 ## 当前目标
 
-建立一个本机可运行的 Sugarmarket 展示商城，完成商品浏览、购物车、Transformer 结账计算、模拟下单，以及后台商品/库存管理和订单查看。技术栈决策见 [[ADR-0001-react-typescript-fastapi-pydantic-sqlite-transformer]]。
+建立一个本机可运行的 Sugarmarket 展示商城，完成商品浏览、购物车、以 Transformer 输出作为成交价的结账、模拟下单，以及老板送货后手动完成订单并扣减库存。普通加法只用于差异诊断；相对差异超出 ±50% 时提示，Transformer 返回 null 时免单。无认证、Emoji 商品视觉、无应用内退货。技术栈决策见 [[ADR-0001-react-typescript-fastapi-pydantic-sqlite-transformer]]。
 
 ## In Progress（硬性上限 2 个）
 
-- 暂无；当前会话完成冷启动知识库，尚未开始业务开发。
+- 暂无。
 
 ## Ready（已拆解，新会话可直接开工）
 
-- 暂无；先取得模型设计文档与前端风格模板，并裁决 [[open-questions-awaiting-human]] 中影响规格的事项。
+- 起草购物车、Transformer 结账、订单/库存及后台管理功能规格，将已确认规则映射到验收标准。
 
 ## Backlog（未拆解，只是念头）
 
-- 接收并阅读人类提供的单 HTML 风格模板、Transformer 设计文档；据此建立首批商品浏览、结账计算、订单/库存规格和验收标准。
-- 明确货币与金额精度、库存扣减与订单状态、后台访问控制等业务规则，更新 [[open-questions-awaiting-human]]。
-- 重建约 100 种演示商品及所需图片/描述，确定可维护的种子数据来源与格式。
-- 建立 React + TypeScript / FastAPI + Pydantic / SQLite 单仓库本机骨架，并配置 strict 类型检查、测试和 lint 三绿工具链。
-- 实现并验收商品浏览、购物车、Transformer 结账计算、模拟订单创建及数据持久化的端到端流程。
-- 实现首版后台：管理商品与库存、查看订单；按确认后的库存和订单规则编写规格与测试。
+- 重建约 100 种演示商品和描述，以 Emoji/Emoji 组合做商品视觉；确定可维护的种子数据格式，不制作真实商品照片。
+- 选定 Transformer 训练/推理框架与本机模型运行方式。
+- 实现并验收购物车、Transformer 结账计算、模拟订单创建及数据持久化的端到端流程。
+- 实现首版后台：无认证地管理商品与库存、查看订单；老板送货后手动完成订单并在此时扣减库存；用可爱文案说明退货需线下联系老板。
 
 ## Done（整理时清空；git 历史负责归档）
 
 - [x] 安装 AI Native 工作流知识库并通过完整性校验。
 - [x] 完成项目目的、范围与技术栈访谈，撰写首版知识库和 Accepted ADR-0001。
+- [x] 阅读人类提供的 Transformer 加法器设计和 HTML 风格模板；裁决金额精度、订单/库存、后台认证和商品视觉规则。
+- [x] 确认有效 Transformer 输出是唯一成交金额来源；对照加法只诊断差异，不修正或拦截。
+- [x] 确认相对差异超出 ±50% 时显示神经网络提示，Transformer 返回 null 时免单。
+- [x] 实现商品目录浏览切片及 SQLite/FastAPI/React 工具链；类型检查、测试、lint、构建通过。

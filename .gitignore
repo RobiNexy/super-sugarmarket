@@ -11,6 +11,8 @@ Thumbs.db
 # Node / React / TypeScript
 node_modules/
 dist/
+.vite/
+coverage/
 
 # Python / FastAPI
 .venv/
