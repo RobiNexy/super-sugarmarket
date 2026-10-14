@@ -1,0 +1,25 @@
+# Environment secrets
+.env
+.env.*
+!.env.example
+
+# Common local artifacts
+*.log
+.DS_Store
+Thumbs.db
+
+# Node / React / TypeScript
+node_modules/
+dist/
+
+# Python / FastAPI
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local SQLite databases (keep seed/source data in versioned text formats)
+*.sqlite
+*.sqlite3
