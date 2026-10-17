@@ -413,7 +413,7 @@ function StorefrontApp() {
       {cartOpen && (
         <section aria-labelledby="cart-title" className="cart-panel" ref={cartPanelRef}>
             <div className="cart-panel__heading">
-              <h2 id="cart-title">🧾 红色塑料袋里的小票</h2>
+              <h2 id="cart-title">🧾 小票</h2>
               <button className="plain-button" onClick={closeCart} type="button">
                 塞回袋里 ✨
               </button>
@@ -561,7 +561,7 @@ function StorefrontApp() {
 
       <footer className="shop-footer">
         <p>老板就在楼下，跑得很快 🏃</p>
-        <p>SugarMarket · 苏格公寓 · 丑萌即正义 ✨</p>
+        <p>SugarMarket · 苏格公寓</p>
       </footer>
     </div>
   );
