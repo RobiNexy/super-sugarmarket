@@ -9,7 +9,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 
 import App from "./App";
 import { parseProducts } from "./api/products";
-import { categoriesFor, filterProducts, formatPriceYuan } from "./catalog";
+import { categoriesFor, filterProducts, formatPriceYuan, shuffleProducts } from "./catalog";
 import type { Product } from "./types";
 
 const sampleProducts: Product[] = [
@@ -58,8 +58,12 @@ describe("catalog helpers", () => {
 
   it("filters products by category and rejects malformed API payloads", () => {
     expect(filterProducts(sampleProducts, "饮品")).toEqual([sampleProducts[0]]);
-    expect(categoriesFor(sampleProducts)).toContain("泡面速食");
+    expect(categoriesFor(sampleProducts)).toEqual(["饮品", "零食", "泡面速食", "日用品", "全部"]);
     expect(() => parseProducts([{ id: "not-an-id" }])).toThrow("商品目录格式不对");
+  });
+
+  it("shuffles the all-products feed while preserving every item", () => {
+    expect(shuffleProducts(sampleProducts, () => 0)).toEqual([sampleProducts[1], sampleProducts[0]]);
   });
 });
 
@@ -72,10 +76,12 @@ describe("storefront catalog and checkout", () => {
   afterEach(() => {
     cleanup();
     window.localStorage.clear();
+    vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });
 
   it("loads product cards, displays prices, and filters the visible category", async () => {
+    vi.spyOn(Math, "random").mockReturnValue(0);
     vi.mocked(fetch).mockResolvedValue(new Response(JSON.stringify(sampleProducts), { status: 200 }));
 
     render(<App />);
@@ -84,12 +90,22 @@ describe("storefront catalog and checkout", () => {
     expect(screen.getByText("清清爽爽，拧开就能喝。")).toBeVisible();
     expect(screen.getByText("💧")).toBeInTheDocument();
     expect(screen.getByText("¥2.00")).toBeVisible();
-    fireEvent.click(screen.getByRole("button", { name: "🍬 饮品" }));
+    expect(screen.queryByRole("heading", { name: "辣条大礼包" })).not.toBeInTheDocument();
+    const categoryButtons = screen.getAllByRole("button", { name: /饮品|零食|速食泡面|日用品|全部/ });
+    expect(categoryButtons.map((button) => button.textContent)).toEqual([
+      "🥤饮品",
+      "🍿零食",
+      "🍜速食泡面",
+      "🧻日用品",
+      "🌈全部",
+    ]);
+    fireEvent.click(screen.getByRole("button", { name: "饮品" }));
 
     expect(screen.getByRole("heading", { name: "农夫山泉 550ml" })).toBeVisible();
     expect(screen.queryByRole("heading", { name: "辣条大礼包" })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "🌈 全部" }));
+    fireEvent.click(screen.getByRole("button", { name: "全部" }));
     expect(screen.getByRole("heading", { name: "辣条大礼包" })).toBeVisible();
+    expect(document.querySelector(".product-grid article h2")?.textContent).toBe("辣条大礼包");
   });
 
   it("renders a composition as one labelled illustration with transformed layers", async () => {
@@ -127,8 +143,9 @@ describe("storefront catalog and checkout", () => {
 
     render(<App />);
     await screen.findByRole("heading", { name: "农夫山泉 550ml" });
-    fireEvent.click(screen.getAllByRole("button", { name: "放进购物袋 🛍️" })[0]);
-    fireEvent.click(screen.getByRole("button", { name: "购物袋，共1件" }));
+    fireEvent.click(screen.getAllByRole("button", { name: "装进红塑料袋 🛍️" })[0]);
+    expect(document.querySelector(".flying-emoji")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "老板的红色塑料袋，共1件" }));
     expect(screen.getByText("单价 ¥2.00 / 件")).toBeVisible();
     expect(window.localStorage.getItem("sugarmarket.cart.v1")).toContain('"quantity":1');
 
@@ -154,7 +171,7 @@ describe("storefront catalog and checkout", () => {
 
     render(<App />);
     await screen.findByRole("heading", { name: "农夫山泉 550ml" });
-    fireEvent.click(screen.getByRole("button", { name: "购物袋，共3件" }));
+    fireEvent.click(screen.getByRole("button", { name: "老板的红色塑料袋，共3件" }));
 
     expect(screen.getByText("单价 ¥2.00 / 件")).toBeVisible();
     expect(screen.getByText("3", { selector: ".quantity-control span" })).toBeVisible();
@@ -168,8 +185,8 @@ describe("storefront catalog and checkout", () => {
 
     render(<App />);
     await screen.findByRole("heading", { name: "农夫山泉 550ml" });
-    fireEvent.click(screen.getAllByRole("button", { name: "放进购物袋 🛍️" })[0]);
-    fireEvent.click(screen.getByRole("button", { name: "购物袋，共1件" }));
+    fireEvent.click(screen.getAllByRole("button", { name: "装进红塑料袋 🛍️" })[0]);
+    fireEvent.click(screen.getByRole("button", { name: "老板的红色塑料袋，共1件" }));
     fireEvent.change(screen.getByLabelText("房间号 🚪"), { target: { value: "1208" } });
     fireEvent.click(screen.getByRole("button", { name: "下单请老板送来 🛵" }));
 

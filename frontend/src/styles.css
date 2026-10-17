@@ -22,8 +22,96 @@ body {
   min-height: 100vh;
   margin: 0;
   background:
+    radial-gradient(circle, rgb(255 180 0 / 20%) 0 2px, transparent 3px) 13px 17px / 58px 62px,
+    radial-gradient(circle, rgb(195 77 224 / 13%) 0 2px, transparent 3px) 31px 8px / 78px 83px,
     repeating-linear-gradient(0deg, transparent 0 3px, rgb(43 33 64 / 2.5%) 3px 4px),
     linear-gradient(160deg, #fff7e8, #ffe9f2 55%, #e8f7ff);
+}
+
+.app-shell {
+  position: relative;
+  isolation: isolate;
+  overflow: clip;
+}
+
+.background-doodles {
+  position: fixed;
+  z-index: -1;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.background-doodle {
+  position: absolute;
+  color: var(--purple);
+  font-size: clamp(1.3rem, 3vw, 2.8rem);
+  opacity: 0.36;
+  filter: drop-shadow(2px 2px 0 rgb(255 255 255 / 70%));
+  animation: doodle-drift 6s ease-in-out infinite;
+  will-change: transform;
+}
+
+.background-doodle:nth-child(1) { top: 13%; left: 3%; color: var(--yellow); }
+.background-doodle:nth-child(2) { top: 29%; left: 1.5%; font-size: 2rem; }
+.background-doodle:nth-child(3) { top: 47%; left: 4%; color: var(--pink); }
+.background-doodle:nth-child(4) { top: 69%; left: 1%; font-size: 2.6rem; }
+.background-doodle:nth-child(5) { top: 84%; left: 7%; color: var(--blue); }
+.background-doodle:nth-child(6) { top: 18%; right: 4%; color: var(--red); }
+.background-doodle:nth-child(7) { top: 38%; right: 2%; font-size: 2.2rem; }
+.background-doodle:nth-child(8) { top: 59%; right: 5%; color: var(--teal); }
+.background-doodle:nth-child(9) { top: 78%; right: 1.5%; }
+.background-doodle:nth-child(10) { top: 92%; right: 13%; color: var(--yellow); }
+.background-doodle:nth-child(11) { top: 7%; left: 22%; font-size: 1.5rem; }
+.background-doodle:nth-child(12) { top: 89%; left: 29%; color: var(--pink); }
+
+.background-click-ripple {
+  position: fixed;
+  z-index: 1;
+  width: 14px;
+  height: 14px;
+  transform: translate(-50%, -50%);
+  border: 3px solid var(--pink);
+  border-radius: 50%;
+  animation: background-ripple 560ms ease-out both;
+}
+
+.background-click-ripple:nth-of-type(3n) { border-color: var(--yellow); }
+.background-click-ripple:nth-of-type(3n + 1) { border-color: var(--blue); }
+
+@keyframes background-ripple {
+  to { transform: translate(-50%, -50%) scale(5.5); opacity: 0; }
+}
+
+@keyframes doodle-drift {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(-8deg); }
+  50% { transform: translate3d(5px, -13px, 0) rotate(10deg) scale(1.12); }
+}
+
+.background-squiggle {
+  position: absolute;
+  width: clamp(56px, 9vw, 125px);
+  overflow: visible;
+  opacity: 0.35;
+  animation: doodle-sway 8s ease-in-out infinite;
+}
+
+.background-squiggle path {
+  fill: none;
+  stroke: var(--teal);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-dasharray: 5 7;
+}
+
+.background-squiggle--left { top: 38%; left: 0.5%; transform: rotate(-12deg); }
+.background-squiggle--right { top: 68%; right: 0.5%; stroke: var(--pink); }
+.background-squiggle--right path { stroke: var(--pink); }
+.background-doodle:nth-child(odd) { animation-duration: 7.5s; }
+
+@keyframes doodle-sway {
+  0%, 100% { translate: 0 0; rotate: -5deg; }
+  50% { translate: 4px -9px; rotate: 7deg; }
 }
 
 button {
@@ -34,7 +122,7 @@ button {
 .shop-header {
   position: relative;
   z-index: 1;
-  padding: 26px 24px 48px;
+  padding: 28px 24px 52px;
   background: var(--blue);
   color: #fff;
   text-align: center;
@@ -57,6 +145,14 @@ button {
   color: var(--yellow);
   font-size: clamp(2rem, 5vw, 3.5rem);
   font-weight: 900;
+  text-shadow: 2px 2px 0 var(--red), 4px 4px 0 rgb(0 0 0 / 15%);
+  letter-spacing: 0.035em;
+  animation: logo-wobble 3.5s ease-in-out infinite;
+}
+
+@keyframes logo-wobble {
+  0%, 100% { transform: rotate(-3deg) translateY(0); }
+  50% { transform: rotate(2deg) translateY(-4px); }
 }
 
 .shop-header__slogan {
@@ -71,6 +167,13 @@ button {
   color: var(--ink);
   font-size: clamp(1rem, 2vw, 1.25rem);
   font-weight: 900;
+  animation: slogan-wiggle 5s ease-in-out infinite;
+}
+
+@keyframes slogan-wiggle {
+  0%, 90%, 100% { transform: rotate(1deg); }
+  93% { transform: rotate(-1.5deg) scale(1.035); }
+  96% { transform: rotate(2deg); }
 }
 
 .shop-header__sparkle {
@@ -82,11 +185,62 @@ button {
 }
 
 .cart-trigger {
+  position: fixed;
+  z-index: 30;
+  top: auto;
+  right: 26px;
+  bottom: 24px;
+  left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 4px solid var(--ink);
+  border-radius: 16px 16px 22px 22px;
+  padding: 11px 15px 12px;
+  background: var(--red);
+  box-shadow: 5px 6px 0 var(--ink), inset 0 -5px 0 rgb(173 41 60 / 24%);
+  color: #fff;
+  font-size: 1rem;
+  text-shadow: 1px 2px 0 rgb(43 33 64 / 40%);
+  transition: transform 180ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 180ms ease;
+}
+
+.cart-trigger::before {
   position: absolute;
-  top: 22px;
-  left: max(18px, calc((100vw - 1080px) / 2));
-  padding: 8px 13px;
-  background: var(--yellow);
+  top: -14px;
+  left: 21px;
+  width: 27px;
+  height: 14px;
+  border: 3px solid var(--ink);
+  border-bottom: 0;
+  border-radius: 12px 12px 0 0;
+  content: "";
+}
+
+.cart-trigger:hover {
+  transform: translateY(-5px) rotate(-2deg) scale(1.035);
+  box-shadow: 7px 10px 0 var(--ink), inset 0 -5px 0 rgb(173 41 60 / 24%);
+}
+
+.cart-trigger:active {
+  transform: translateY(2px) rotate(1deg);
+  box-shadow: 2px 3px 0 var(--ink);
+}
+
+.cart-trigger__emoji {
+  font-size: 1.65rem;
+  filter: drop-shadow(1px 2px 0 rgb(43 33 64 / 30%));
+  animation: bag-sway 2.8s ease-in-out infinite;
+}
+
+@keyframes bag-sway {
+  0%, 100% { transform: rotate(-5deg); }
+  50% { transform: rotate(6deg) translateY(-2px); }
+}
+
+.cart-trigger__label {
+  white-space: nowrap;
+  letter-spacing: 0.015em;
 }
 
 .cart-trigger__count {
@@ -94,9 +248,33 @@ button {
   min-width: 1.6em;
   height: 1.6em;
   place-items: center;
+  border: 2px solid var(--ink);
   border-radius: 50%;
-  background: var(--ink);
-  color: #fff;
+  background: var(--yellow);
+  color: var(--ink);
+  text-shadow: none;
+  animation: bag-count-pop 420ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes bag-count-pop {
+  0% { transform: scale(0.4) rotate(-18deg); }
+  70% { transform: scale(1.3) rotate(8deg); }
+  100% { transform: scale(1); }
+}
+
+.flying-emoji {
+  position: fixed;
+  z-index: 50;
+  pointer-events: none;
+  font-size: 2.5rem;
+  filter: drop-shadow(2px 3px 0 rgb(43 33 64 / 30%));
+  animation: fly-to-red-bag 720ms cubic-bezier(0.3, 0.75, 0.2, 1) forwards;
+}
+
+@keyframes fly-to-red-bag {
+  0% { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(0); }
+  72% { opacity: 1; transform: translate(calc(-50% + var(--fly-mid-x)), calc(-50% + var(--fly-mid-y))) scale(0.72) rotate(280deg); }
+  100% { opacity: 0.1; transform: translate(calc(-50% + var(--fly-x)), calc(-50% + var(--fly-y))) scale(0.18) rotate(520deg); }
 }
 
 .admin-entry {
@@ -111,10 +289,10 @@ button {
 
 .shop-main {
   position: relative;
-  z-index: 0;
-  width: min(1100px, 100%);
+  z-index: 1;
+  width: min(1400px, 100%);
   margin: 0 auto;
-  padding: 8px 24px 48px;
+  padding: 8px 28px 48px;
 }
 
 .cart-panel,
@@ -321,7 +499,22 @@ button {
   padding: 7px 22px;
   background: var(--pink);
   box-shadow: 4px 4px 0 var(--ink);
-  font-size: clamp(1.3rem, 3vw, 1.7rem);
+  font-size: clamp(1.4rem, 3vw, 1.9rem);
+  letter-spacing: 0.04em;
+  text-shadow: 1px 1px 0 #fff;
+  background-image: linear-gradient(110deg, #ffb4dc, #ff7ac6 55%, #ffd3ec);
+  position: relative;
+}
+
+.section-title::after {
+  position: absolute;
+  right: -14px;
+  bottom: -13px;
+  transform: rotate(16deg);
+  color: var(--red);
+  content: "✦";
+  font-size: 1.3rem;
+  text-shadow: 1px 1px 0 var(--ink);
 }
 
 .category-list {
@@ -350,14 +543,36 @@ button {
 }
 
 .category-pill--active {
-  background: var(--yellow);
+  transform: rotate(-1deg) translateY(-2px);
+  background: var(--pill-color, var(--yellow));
+  box-shadow: 4px 5px 0 var(--ink), inset 0 -4px 0 rgb(43 33 64 / 7%);
+  outline: 2px dashed var(--purple);
+  outline-offset: 3px;
+}
+
+.category-pill__icon {
+  display: inline-grid;
+  width: 1.7em;
+  height: 1.7em;
+  place-items: center;
+  margin-right: 4px;
+  border: 1.5px solid rgb(43 33 64 / 25%);
+  border-radius: 45% 55% 46% 54%;
+  background: rgb(255 255 255 / 75%);
+  font-size: 1.05em;
+  transition: transform 180ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.category-pill:hover .category-pill__icon,
+.category-pill--active .category-pill__icon {
+  transform: rotate(-12deg) scale(1.18);
 }
 
 .product-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
-  padding: 14px 4px 8px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 19px 16px;
+  padding: 19px 4px 12px;
 }
 
 .product-card {
@@ -366,36 +581,79 @@ button {
   transform: rotate(var(--card-tilt, 0deg));
   border: 3px solid var(--ink);
   border-radius: 6px 14px 8px 12px;
-  padding: 16px;
-  background: var(--card-color, #fff);
+  padding: 13px 12px 14px;
+  background:
+    conic-gradient(from 30deg at 30% 20%, rgb(255 255 255 / 38%) 0 25%, transparent 25% 50%, rgb(255 255 255 / 24%) 50% 75%, transparent 75%),
+    var(--card-color, #fff);
   box-shadow: 5px 5px 0 var(--ink);
-  transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 220ms ease;
-}
-
-.product-card:nth-child(3n + 1) {
-  --card-tilt: -1deg;
-}
-
-.product-card:nth-child(3n) {
-  --card-tilt: 1deg;
+  transition: transform 250ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 250ms ease, filter 250ms ease;
+  animation: cardin 500ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
 .product-card:hover {
   z-index: 1;
-  transform: rotate(0deg) translateY(-3px) scale(1.025);
-  box-shadow: 8px 8px 0 var(--ink);
+  transform: rotate(0deg) translateY(-5px) scale(1.045);
+  box-shadow: 9px 10px 0 var(--ink);
+  filter: saturate(1.16);
 }
 
 .product-card::before {
   position: absolute;
-  top: -11px;
-  left: 16px;
-  width: 74px;
-  height: 22px;
-  transform: rotate(-7deg);
-  border: 1px dashed rgb(43 33 64 / 30%);
-  background: rgb(255 255 255 / 55%);
+  top: -10px;
+  left: 13px;
+  width: var(--tape-width, 74px);
+  height: var(--tape-height, 22px);
+  transform: rotate(var(--tape-tilt, -7deg));
+  border: 1px dashed rgb(43 33 64 / 34%);
+  background: rgb(255 255 255 / var(--tape-opacity, 64%));
+  box-shadow: 0 1px 2px rgb(43 33 64 / 12%);
   content: "";
+}
+
+.product-card::after {
+  position: absolute;
+  top: -16px;
+  right: -9px;
+  transform: scale(0) rotate(-80deg);
+  color: var(--yellow);
+  content: "✦";
+  font-size: 1.7rem;
+  opacity: 0;
+  text-shadow: 1px 2px 0 var(--ink);
+  transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1), opacity 160ms ease;
+}
+
+.product-card:hover::after {
+  transform: scale(1) rotate(8deg);
+  opacity: 1;
+}
+
+.product-card--sticker .product-card__name {
+  display: table;
+  max-width: 100%;
+  transform: rotate(var(--sticker-tilt, -5deg));
+  border: 2px dashed var(--ink);
+  border-radius: 4px 11px 5px 9px;
+  padding: 4px 7px;
+  background: var(--sticker-color, #fff5bc);
+  box-shadow: 2px 3px 0 rgb(43 33 64 / 28%);
+  font-size: var(--sticker-size, 1.08rem);
+  line-height: 1.18;
+}
+
+.product-card__sticker {
+  position: absolute;
+  z-index: 2;
+  top: 4px;
+  right: 3px;
+  transform: rotate(calc(var(--sticker-tilt, -5deg) * -0.75));
+  border: 2px solid var(--ink);
+  border-radius: 3px 9px 4px 8px;
+  padding: 2px 5px;
+  background: var(--sticker-color, var(--pink));
+  box-shadow: 2px 2px 0 var(--ink);
+  font-size: 0.64rem;
+  font-weight: 900;
 }
 
 .product-card--drink {
@@ -452,30 +710,43 @@ button {
 
 .product-card__name {
   margin: 4px 0 6px;
-  font-size: 1.05rem;
+  font-size: 0.96rem;
   line-height: 1.35;
+  font-weight: 900;
+  letter-spacing: 0.015em;
+  text-wrap: pretty;
 }
 
 .product-card__description {
-  min-height: 2.8em;
+  min-height: 4.2em;
   margin: 0 0 10px;
   color: rgb(43 33 64 / 80%);
-  font-size: 0.92rem;
+  font-size: 0.81rem;
   line-height: 1.4;
+  text-wrap: pretty;
 }
 
 .product-card__price {
-  margin: 8px 0 0;
-  color: #8030a0;
-  font-size: 1.35rem;
+  display: table;
+  margin: 9px 0 0;
+  transform: rotate(-1.5deg);
+  border: 2px solid var(--ink);
+  border-radius: 5px 12px 4px 10px;
+  padding: 2px 8px;
+  background: var(--yellow);
+  box-shadow: 2px 2px 0 var(--ink);
+  color: #7230a0;
+  font-size: 1.12rem;
   font-weight: 900;
+  letter-spacing: 0.02em;
 }
 
 .add-to-cart-button {
   width: 100%;
-  margin-top: 12px;
-  padding: 8px 10px;
+  margin-top: 10px;
+  padding: 7px 6px;
   background: var(--yellow);
+  font-size: 0.8rem;
 }
 
 .add-to-cart-button:disabled {
@@ -895,7 +1166,19 @@ button {
   width: 100%;
 }
 
-@media (max-width: 860px) {
+@media (max-width: 1200px) {
+  .product-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 960px) {
+  .product-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
   .product-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -913,11 +1196,16 @@ button {
   }
 
   .cart-trigger {
-    top: auto;
-    bottom: 28px;
-    left: 14px;
-    padding: 5px 9px;
-    font-size: 0.88rem;
+    right: 12px;
+    bottom: 14px;
+    max-width: calc(100vw - 24px);
+    gap: 5px;
+    padding: 8px 10px;
+    font-size: 0.75rem;
+  }
+
+  .cart-trigger__emoji {
+    font-size: 1.35rem;
   }
 
   .shop-main {
@@ -933,16 +1221,13 @@ button {
     padding: 7px 13px;
   }
 
-  .product-grid {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 16px;
-  }
-
   .admin-entry {
-    top: auto;
-    right: 14px;
-    bottom: 31px;
-    font-size: 0.88rem;
+    top: 9px;
+    right: 9px;
+    border-radius: 99px;
+    padding: 3px 7px;
+    background: rgb(43 33 64 / 24%);
+    font-size: 0.68rem;
   }
 
   .admin-header {
@@ -968,6 +1253,16 @@ button {
   }
 }
 
+@media (max-width: 390px) {
+  .product-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cart-trigger__label {
+    font-size: 0.7rem;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -986,5 +1281,15 @@ button {
   .checkout-form input:focus,
   .admin-login-card__mascot {
     transform: none !important;
+  }
+
+  .background-doodle,
+  .background-squiggle {
+    animation: none !important;
+  }
+
+  .flying-emoji {
+    animation: none !important;
+    opacity: 0;
   }
 }

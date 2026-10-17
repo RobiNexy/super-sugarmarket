@@ -5,8 +5,9 @@
  * @adr [[ADR-0001-react-typescript-fastapi-pydantic-sqlite-transformer]]
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
+import type { CSSProperties, MouseEvent as ReactMouseEvent } from "react";
 
 import AdminApp from "./AdminApp";
 import { submitCheckout, CheckoutApiError } from "./api/checkout";
@@ -14,14 +15,33 @@ import { fetchProducts } from "./api/products";
 import { addCartProduct, readCart, removeCartProduct, saveCart, setCartQuantity } from "./cart";
 import { EmojiProductArt } from "./EmojiArtCanvas";
 import type { CartLine } from "./cart";
-import { ALL_CATEGORIES, categoriesFor, filterProducts, formatPriceYuan } from "./catalog";
+import {
+  ALL_CATEGORIES,
+  categoriesFor,
+  categoryIcon,
+  categoryLabel,
+  filterProducts,
+  formatPriceYuan,
+  shuffleProducts,
+} from "./catalog";
 import type { CheckoutResult } from "./api/checkout";
 import type { Product } from "./types";
 
 type CatalogState =
   | { status: "loading" }
   | { status: "error" }
-  | { status: "ready"; products: Product[] };
+  | { status: "ready"; products: Product[]; shuffledProducts: Product[] };
+
+type FlyingEmoji = {
+  key: number;
+  emoji: string;
+  x: number;
+  y: number;
+  deltaX: number;
+  deltaY: number;
+  middleX: number;
+  middleY: number;
+};
 
 const CATEGORY_STYLES: Record<string, string> = {
   饮品: "product-card--drink",
@@ -29,6 +49,117 @@ const CATEGORY_STYLES: Record<string, string> = {
   泡面速食: "product-card--meal",
   日用品: "product-card--daily",
 };
+const CATEGORY_PILL_COLORS: Record<string, string> = {
+  饮品: "#dff3ff",
+  零食: "#ffe1ef",
+  泡面速食: "#ffe1dc",
+  日用品: "#d9fff6",
+  [ALL_CATEGORIES]: "#fff0bd",
+};
+
+const DECORATIVE_EMOJI = ["✦", "🍬", "⋆", "🧃", "💫", "🍓", "✧", "🌀", "🖍️", "✨", "🍭", "🌈"];
+const STICKER_LABELS = ["老板推荐 🍬", "脆脆担当 🥨", "今日好物 ✨", "刚补货啦 📦", "幸运小零食 🍀"];
+
+function prefersReducedMotion(): boolean {
+  return window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+}
+
+function seededFraction(seed: number, salt: number): number {
+  const value = Math.sin(seed * 127.1 + salt * 311.7) * 43758.5453;
+  return value - Math.floor(value);
+}
+
+function productCardStyle(productId: number): CSSProperties {
+  const tilt = (seededFraction(productId, 1) - 0.5) * 7;
+  const tapeTilt = (seededFraction(productId, 2) - 0.5) * 26;
+  const stickerTilt = (seededFraction(productId, 3) - 0.5) * 22;
+  const tapeWidth = 58 + seededFraction(productId, 4) * 42;
+  const tapeHeight = 17 + seededFraction(productId, 5) * 9;
+  const labelSize = 0.94 + seededFraction(productId, 6) * 0.38;
+  const stickerColors = ["#ffd3ec", "#fff0bd", "#c9f5e9", "#dff3ff", "#ffe1dc"];
+  return {
+    "--card-tilt": `${tilt.toFixed(2)}deg`,
+    "--tape-tilt": `${tapeTilt.toFixed(2)}deg`,
+    "--tape-width": `${tapeWidth.toFixed(0)}px`,
+    "--tape-height": `${tapeHeight.toFixed(0)}px`,
+    "--sticker-tilt": `${stickerTilt.toFixed(2)}deg`,
+    "--sticker-size": `${labelSize.toFixed(2)}rem`,
+    "--sticker-color": stickerColors[Math.floor(seededFraction(productId, 7) * stickerColors.length)],
+    "--tape-opacity": `${(0.42 + seededFraction(productId, 8) * 0.42).toFixed(2)}`,
+    animationDelay: `${(productId % 9) * 24}ms`,
+  } as CSSProperties;
+}
+
+function hasProductSticker(productId: number): boolean {
+  return productId % 9 === 0 || productId % 17 === 0;
+}
+
+function BackgroundDoodles() {
+  const doodlesRef = useRef<HTMLDivElement>(null);
+  const [ripples, setRipples] = useState<Array<{ id: number; x: number; y: number }>>([]);
+
+  useEffect(() => {
+    let frame = 0;
+    let rippleId = 0;
+    const timers: number[] = [];
+    const onPointerMove = (event: PointerEvent) => {
+      if (prefersReducedMotion() || frame !== 0) return;
+      frame = window.requestAnimationFrame(() => {
+        const x = event.clientX / window.innerWidth - 0.5;
+        const y = event.clientY / window.innerHeight - 0.5;
+        doodlesRef.current?.querySelectorAll<HTMLElement>(".background-doodle").forEach((doodle) => {
+          const depth = Number(doodle.dataset.depth ?? "1");
+          doodle.style.translate = `${-x * 28 * depth}px ${-y * 20 * depth}px`;
+        });
+        frame = 0;
+      });
+    };
+    const onClick = (event: globalThis.MouseEvent) => {
+      if (prefersReducedMotion()) return;
+      const id = rippleId++;
+      setRipples((items) => [...items.slice(-5), { id, x: event.clientX, y: event.clientY }]);
+      timers.push(window.setTimeout(() => {
+        setRipples((items) => items.filter((item) => item.id !== id));
+      }, 600));
+    };
+    window.addEventListener("pointermove", onPointerMove, { passive: true });
+    window.addEventListener("click", onClick);
+    return () => {
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("click", onClick);
+      if (frame !== 0) window.cancelAnimationFrame(frame);
+      timers.forEach(window.clearTimeout);
+    };
+  }, []);
+
+  return (
+    <div aria-hidden="true" className="background-doodles" ref={doodlesRef}>
+      {DECORATIVE_EMOJI.map((emoji, index) => (
+        <span
+          className="background-doodle"
+          data-depth={1 + (index % 3)}
+          key={`${emoji}-${index}`}
+          style={{ animationDelay: `${-index * 0.63}s` }}
+        >
+          {emoji}
+        </span>
+      ))}
+      {ripples.map((ripple) => (
+        <span
+          className="background-click-ripple"
+          key={ripple.id}
+          style={{ left: ripple.x, top: ripple.y }}
+        />
+      ))}
+      <svg className="background-squiggle background-squiggle--left" viewBox="0 0 120 80">
+        <path d="M8 58 C20 12 39 71 55 30 S89 9 111 35" />
+      </svg>
+      <svg className="background-squiggle background-squiggle--right" viewBox="0 0 100 100">
+        <path d="M50 4 C86 32 86 66 50 96 C14 66 14 32 50 4Z" />
+      </svg>
+    </div>
+  );
+}
 
 const TIER_COPY: Record<CheckoutResult["tier"], string | null> = {
   none: null,
@@ -47,7 +178,7 @@ function checkoutErrorMessage(error: unknown): string {
 
 function StorefrontApp() {
   const [catalog, setCatalog] = useState<CatalogState>({ status: "loading" });
-  const [category, setCategory] = useState(ALL_CATEGORIES);
+  const [category, setCategory] = useState("饮品");
   const [retryCount, setRetryCount] = useState(0);
   const [cart, setCart] = useState<CartLine[]>(readCart);
   const [cartOpen, setCartOpen] = useState(false);
@@ -55,6 +186,8 @@ function StorefrontApp() {
   const [checkoutPending, setCheckoutPending] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [orderResult, setOrderResult] = useState<CheckoutResult | null>(null);
+  const [flyingEmoji, setFlyingEmoji] = useState<FlyingEmoji | null>(null);
+  const bagButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     saveCart(cart);
@@ -65,7 +198,11 @@ function StorefrontApp() {
     setCatalog({ status: "loading" });
 
     void fetchProducts(controller.signal)
-      .then((products) => setCatalog({ status: "ready", products }))
+      .then((products) => setCatalog({
+        status: "ready",
+        products,
+        shuffledProducts: shuffleProducts(products),
+      }))
       .catch(() => {
         if (!controller.signal.aborted) setCatalog({ status: "error" });
       });
@@ -77,13 +214,40 @@ function StorefrontApp() {
     () => (catalog.status === "ready" ? categoriesFor(catalog.products) : []),
     [catalog],
   );
-  const visibleProducts =
-    catalog.status === "ready" ? filterProducts(catalog.products, category) : [];
+  const visibleProducts = catalog.status !== "ready"
+    ? []
+    : category === ALL_CATEGORIES
+      ? catalog.shuffledProducts
+      : filterProducts(catalog.products, category);
   const productById = useMemo(
     () => new Map(catalog.status === "ready" ? catalog.products.map((product) => [product.id, product]) : []),
     [catalog],
   );
   const cartCount = cart.reduce((count, line) => count + line.quantity, 0);
+
+  function handleAddToCart(product: Product, event: ReactMouseEvent<HTMLButtonElement>) {
+    const card = event.currentTarget.closest(".product-card");
+    const sourceElement = card?.querySelector<HTMLElement>(
+      ".product-card__emoji-art, .product-card__emoji",
+    );
+    const sourceRect = sourceElement?.getBoundingClientRect() ?? event.currentTarget.getBoundingClientRect();
+    const targetRect = bagButtonRef.current?.getBoundingClientRect();
+    if (targetRect !== undefined) {
+      const deltaX = targetRect.left + targetRect.width / 2 - sourceRect.left - sourceRect.width / 2;
+      const deltaY = targetRect.top + targetRect.height / 2 - sourceRect.top - sourceRect.height / 2;
+      setFlyingEmoji({
+        key: Math.round(performance.now() * 1000),
+        emoji: product.emoji_art?.layers[0]?.emoji ?? product.emoji ?? "🍬",
+        x: sourceRect.left + sourceRect.width / 2,
+        y: sourceRect.top + sourceRect.height / 2,
+        deltaX,
+        deltaY,
+        middleX: deltaX * 0.72,
+        middleY: deltaY * 0.72,
+      });
+    }
+    setCart((items) => addCartProduct(items, product.id));
+  }
 
   async function handleCheckout(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -104,27 +268,50 @@ function StorefrontApp() {
 
   return (
     <div className="app-shell">
+      <BackgroundDoodles />
       <header className="shop-header">
         <div className="shop-header__logo">SugarMarket</div>
         <p className="shop-header__slogan">苏格公寓楼下的小卖部有网站啦！🍬</p>
-        <button
-          aria-label={`购物袋，共${cartCount}件`}
-          aria-expanded={cartOpen}
-          className="cart-trigger jelly-button"
-          onClick={() => setCartOpen((open) => !open)}
-          type="button"
-        >
-          🛍️ 购物袋 <span className="cart-trigger__count">{cartCount}</span>
-        </button>
         <a className="admin-entry" href="#admin">老板后台 🔑</a>
         <span aria-hidden="true" className="shop-header__sparkle">✦</span>
       </header>
+
+      <button
+        aria-label={`老板的红色塑料袋，共${cartCount}件`}
+        aria-expanded={cartOpen}
+        className="cart-trigger"
+        onClick={() => setCartOpen((open) => !open)}
+        ref={bagButtonRef}
+        type="button"
+      >
+        <span aria-hidden="true" className="cart-trigger__emoji">🛍️</span>
+        <span className="cart-trigger__label">老板的红色塑料袋</span>
+        <span className="cart-trigger__count">{cartCount}</span>
+      </button>
+      {flyingEmoji !== null && (
+        <span
+          aria-hidden="true"
+          className="flying-emoji"
+          key={flyingEmoji.key}
+          onAnimationEnd={() => setFlyingEmoji(null)}
+          style={{
+            left: flyingEmoji.x,
+            top: flyingEmoji.y,
+            "--fly-x": `${flyingEmoji.deltaX}px`,
+            "--fly-y": `${flyingEmoji.deltaY}px`,
+            "--fly-mid-x": `${flyingEmoji.middleX}px`,
+            "--fly-mid-y": `${flyingEmoji.middleY}px`,
+          } as CSSProperties}
+        >
+          {flyingEmoji.emoji}
+        </span>
+      )}
 
       <main className="shop-main">
         {cartOpen && (
           <section aria-labelledby="cart-title" className="cart-panel">
             <div className="cart-panel__heading">
-              <h2 id="cart-title">🧺 你的小购物袋</h2>
+              <h2 id="cart-title">🧾 红色塑料袋里的小票</h2>
               <button className="plain-button" onClick={() => setCartOpen(false)} type="button">
                 收起来 ✨
               </button>
@@ -232,9 +419,13 @@ function StorefrontApp() {
                   className={`category-pill${category === item ? " category-pill--active" : ""}`}
                   key={item}
                   onClick={() => setCategory(item)}
+                  style={{ "--pill-color": CATEGORY_PILL_COLORS[item] ?? "#ffe1ef" } as CSSProperties}
                   type="button"
                 >
-                  {item === ALL_CATEGORIES ? "🌈" : "🍬"} {item}
+                  <span aria-hidden="true" className={`category-pill__icon category-pill__icon--${item === ALL_CATEGORIES ? "all" : item}`}>
+                    {categoryIcon(item)}
+                  </span>
+                  <span>{categoryLabel(item)}</span>
                 </button>
               ))}
             </nav>
@@ -258,7 +449,16 @@ function StorefrontApp() {
           {catalog.status === "ready" && visibleProducts.length > 0 && (
             <div aria-live="polite" className="product-grid">
               {visibleProducts.map((product) => (
-                <article className={`product-card ${CATEGORY_STYLES[product.category] ?? ""}`} key={product.id}>
+                <article
+                  className={`product-card ${CATEGORY_STYLES[product.category] ?? ""} ${hasProductSticker(product.id) ? "product-card--sticker" : ""}`}
+                  key={product.id}
+                  style={productCardStyle(product.id)}
+                >
+                  {hasProductSticker(product.id) && (
+                    <span className="product-card__sticker">
+                      {STICKER_LABELS[product.id % STICKER_LABELS.length]}
+                    </span>
+                  )}
                   <EmojiProductArt product={product} />
                   <h2 className="product-card__name">{product.name}</h2>
                   <p className="product-card__description">{product.description}</p>
@@ -266,10 +466,10 @@ function StorefrontApp() {
                   <button
                     className="add-to-cart-button jelly-button"
                     disabled={product.available_quantity === 0}
-                    onClick={() => setCart((items) => addCartProduct(items, product.id))}
+                    onClick={(event) => handleAddToCart(product, event)}
                     type="button"
                   >
-                    {product.available_quantity === 0 ? "暂时卖光啦 🥺" : "放进购物袋 🛍️"}
+                    {product.available_quantity === 0 ? "暂时卖光啦 🥺" : "装进红塑料袋 🛍️"}
                   </button>
                 </article>
               ))}

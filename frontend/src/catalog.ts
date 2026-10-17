@@ -6,12 +6,37 @@ import type { Product } from "./types";
 
 export const ALL_CATEGORIES = "全部";
 const TEMPLATE_CATEGORIES = ["饮品", "零食", "泡面速食", "日用品"];
+const CATEGORY_ICONS: Record<string, string> = {
+  饮品: "🥤",
+  零食: "🍿",
+  泡面速食: "🍜",
+  日用品: "🧻",
+  [ALL_CATEGORIES]: "🌈",
+};
+const CATEGORY_LABELS: Record<string, string> = { 泡面速食: "速食泡面" };
 
 export function categoriesFor(products: readonly Product[]): string[] {
   const additionalCategories = [...new Set(products.map((product) => product.category))]
     .filter((category) => !TEMPLATE_CATEGORIES.includes(category))
     .sort((left, right) => left.localeCompare(right, "zh-CN"));
-  return [ALL_CATEGORIES, ...TEMPLATE_CATEGORIES, ...additionalCategories];
+  return [...TEMPLATE_CATEGORIES, ...additionalCategories, ALL_CATEGORIES];
+}
+
+export function categoryIcon(category: string): string {
+  return CATEGORY_ICONS[category] ?? "🍭";
+}
+
+export function categoryLabel(category: string): string {
+  return CATEGORY_LABELS[category] ?? category;
+}
+
+export function shuffleProducts<T>(products: readonly T[], random: () => number = Math.random): T[] {
+  const shuffled = [...products];
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(random() * (index + 1));
+    [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+  }
+  return shuffled;
 }
 
 export function filterProducts(
