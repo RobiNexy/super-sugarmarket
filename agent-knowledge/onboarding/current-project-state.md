@@ -43,4 +43,4 @@
 - 本地开发：Node.js 22/npm + React/TypeScript/Vite；Python 3.12/uv + FastAPI/Pydantic/Uvicorn；SQLite。
 - 模型运行：ONNX Runtime + NumPy；不需要在 API 运行时加载 PyTorch。
 - 训练环境：PyTorch 2.11+cu128，RTX 2080 Ti；训练结束。
-- 部署：首版仅本机运行；不要求线上部署。
+- 部署：首版面向店内局域网单机部署（Linux + systemd + Caddy），后台无认证，不做公网发布。文档见 [[deployment-overview]] 与 [[deployment-tutorial]]。
