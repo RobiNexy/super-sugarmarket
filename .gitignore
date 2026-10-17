@@ -26,5 +26,9 @@ __pycache__/
 *.sqlite
 *.sqlite3
 
-# Model training artifacts (checkpoints, reports, logs)
-backend/checkpoints/
+# Model training artifacts (checkpoints, reports, logs);
+# the deployed ONNX model is the exception — it ships with the repo.
+backend/checkpoints/*
+!backend/checkpoints/adder-onnx/
+backend/checkpoints/adder-onnx/*
+!backend/checkpoints/adder-onnx/adder.onnx

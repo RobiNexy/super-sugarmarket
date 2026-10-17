@@ -36,7 +36,7 @@
 | 路径 | 是否进 Git | 部署时如何获得 |
 |---|---|---|
 | `backend/app/data/products.json` | 是 | 随代码 |
-| `backend/checkpoints/adder-onnx/adder.onnx` | **否**（`.gitignore` 覆盖 `backend/checkpoints/`），约 443 KiB | 从训练/开发机复制，见 [[deployment-tutorial]] 第 4 步 |
+| `backend/checkpoints/adder-onnx/adder.onnx` | **是**（2026-10-17 起纳入 Git，约 443 KiB） | 随代码克隆获得；升级时 `git pull` 自动更新 |
 | SQLite 数据库文件 | 否 | 首次启动自动创建；路径由 `SUGARMARKET_DB_PATH` 指定 |
 | `frontend/dist/` | 否 | 在部署机或构建机执行 `npm run build` |
 
@@ -72,7 +72,7 @@
 
 | 风险 | 后果 | 对策 |
 |---|---|---|
-| 模型文件缺失或损坏 | `OnnxAdder` 构造失败，异常在 `checkout.py` 的 `try` 块内被捕获，结账按规则**创建免单订单**（第三档），顾客不会看到报错。 | 部署后必做冒烟测试（教程第 8 步）；每次升级检查模型文件存在。这是当前设计的副作用，建议人类裁决是否改为启动时失败（待提出为新问题）。 |
+| 模型文件缺失或损坏 | `OnnxAdder` 构造失败，异常在 `checkout.py` 的 `try` 块内被捕获，结账按规则**创建免单订单**（第三档），顾客不会看到报错。 | 模型已随 Git 分发（`.gitignore` 为其保留例外），升级后必做冒烟测试（教程第 8 步）。静默免单仍是当前设计的副作用，建议人类裁决是否改为启动时失败（待提出为新问题）。 |
 | 后台无认证 | 局域网内任何人可改库存、完成订单 | 仅内网访问；反代加 basicauth（可选） |
 | SQLite 单写者 | 并发下单时写锁排队，极端情况下返回 500 | 单店规模无需处理；`--workers 1` |
 | 部署目录被 git 清理 | 误删模型或数据库 | 数据库放 `/var/lib`；模型单独备份 |

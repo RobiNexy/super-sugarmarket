@@ -74,24 +74,22 @@ sudo -u sugarmarket env HOME=/opt/sugarmarket /opt/sugarmarket/app/backend/.venv
 
 ---
 
-## 第 4 步：放入神经加法器模型（必须）
+## 第 4 步：核对神经加法器模型（必须）
 
-模型文件 `adder.onnx` 不在 Git 中。从开发机复制（在开发机上执行）：
-
-```sh
-scp backend/checkpoints/adder-onnx/adder.onnx deploy@<服务器>:/tmp/adder.onnx
-```
-
-在服务器上放到代码目录的固定位置：
+模型文件 `adder.onnx`（约 443 KiB）已随 Git 分发（`.gitignore` 为它保留了例外），克隆后应已存在：
 
 ```sh
-sudo -u sugarmarket mkdir -p /opt/sugarmarket/app/backend/checkpoints/adder-onnx
-sudo mv /tmp/adder.onnx /opt/sugarmarket/app/backend/checkpoints/adder-onnx/adder.onnx
-sudo chown sugarmarket:sugarmarket /opt/sugarmarket/app/backend/checkpoints/adder-onnx/adder.onnx
 ls -l /opt/sugarmarket/app/backend/checkpoints/adder-onnx/adder.onnx
 ```
 
-文件大小应为 453,367 字节（约 443 KiB）。缺失时所有结账都会变成免单，见 [[deployment-overview]] 第 7 节。
+文件大小应为 453,367 字节。若文件缺失（例如从旧提交部署），从开发机复制一份：
+
+```sh
+# 在开发机上执行
+scp backend/checkpoints/adder-onnx/adder.onnx deploy@<服务器>:/opt/sugarmarket/app/backend/checkpoints/adder-onnx/adder.onnx
+```
+
+缺失时所有结账都会变成免单，见 [[deployment-overview]] 第 7 节。
 
 ---
 
@@ -302,8 +300,7 @@ journalctl -u caddy -f
 ## 附：部署完成检查表
 
 - [ ] 第 3 步 `import app.main` 成功
-- [ ] 第 4 步模型文件存在（453,367 字节）
-- [ ] 第 6 步 systemd 服务 `active (running)`，重启后仍运行
+- [ ] 第 4 步模型文件存在（453,367 字节）- [ ] 第 6 步 systemd 服务 `active (running)`，重启后仍运行
 - [ ] 第 7 步 Caddy 能访问首页与 `/api/products`
 - [ ] 第 8 步冒烟测试结果为 `tier:none`
 - [ ] 第 9 步备份脚本成功生成文件
