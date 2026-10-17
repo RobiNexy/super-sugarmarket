@@ -5,6 +5,8 @@ description = "Local Sugarmarket demo API"
 requires-python = ">=3.12"
 dependencies = [
   "fastapi>=0.115,<1",
+  "numpy>=2,<3",
+  "onnxruntime>=1.29.0",
   "pydantic>=2.10,<3",
   "uvicorn>=0.34,<1",
 ]
@@ -16,13 +18,27 @@ dev = [
   "pytest>=8.3,<9",
   "ruff>=0.9,<1",
 ]
+# 模型训练环境（PyTorch CUDA）；API 运行不需要，按需 `uv sync --group train`。
+# 面向本机 RTX 2080 Ti（Turing, sm_75）；驱动 595 兼容 CUDA 12.8 运行时。
+train = [
+  "onnx>=1.22.0",
+  "torch>=2.9,<3",
+]
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu128", group = "train" }
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
 
 [tool.pyright]
-include = ["app", "tests"]
+include = ["app", "adder", "tests"]
 pythonVersion = "3.12"
 typeCheckingMode = "strict"
 
