@@ -1,4 +1,4 @@
-/* @purpose Provide deterministic category filtering and exact fen formatting.
+/* @purpose Provide deterministic category filtering and server-formatted yuan display.
  * @spec [[storefront-product-catalog-browsing-and-category-filter]]
  */
 
@@ -23,13 +23,9 @@ export function filterProducts(
     : products.filter((product) => product.category === category);
 }
 
-export function formatPriceFen(priceFen: number): string {
-  if (!Number.isSafeInteger(priceFen) || priceFen < 0) {
-    throw new RangeError("商品价格必须是非负整数分。");
+export function formatPriceYuan(priceYuan: string): string {
+  if (!/^\d+\.\d{2}$/.test(priceYuan)) {
+    throw new RangeError("商品价格必须是两位小数的元字符串。");
   }
-
-  const price = BigInt(priceFen);
-  const yuan = price / 100n;
-  const fen = (price % 100n).toString().padStart(2, "0");
-  return `¥${yuan}.${fen}`;
+  return `¥${priceYuan}`;
 }

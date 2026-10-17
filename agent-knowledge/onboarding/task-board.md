@@ -1,10 +1,10 @@
-# 任务看板（最后更新：2026-10-14）
+# 任务看板（最后更新：2026-10-17）
 
 任务粒度以一次会话可完成的垂直切片为宜（约 30 分钟至 2 小时）；Ready 任务必须自包含；In Progress 最多 2 项；短期任务不编号；整理时清空 Done，git 历史负责归档。
 
 ## 当前目标
 
-建立一个本机可运行的 Sugarmarket 展示商城，完成商品浏览、购物车、以 Transformer 输出作为成交价的结账、模拟下单，以及老板送货后手动完成订单并扣减库存。普通加法只用于差异诊断；相对差异超出 ±50% 时提示，Transformer 返回 null 时免单。无认证、Emoji 商品视觉、无应用内退货。技术栈决策见 [[ADR-0001-react-typescript-fastapi-pydantic-sqlite-transformer]]。
+建立一个本机可运行的 Sugarmarket 展示商城：顾客浏览商品、购物袋结账，订单由老板送货后在后台完成并扣库存。商品目录、结账、订单后台、商品维护和 Emoji 整体插画编辑已实现。规格入口：[[checkout-cart-and-order]]、[[admin-backoffice]]、[[cute-ui-copy-and-motion]]、[[storefront-product-catalog-browsing-and-category-filter]]。
 
 ## In Progress（硬性上限 2 个）
 
@@ -12,20 +12,25 @@
 
 ## Ready（已拆解，新会话可直接开工）
 
-- 起草购物车、Transformer 结账、订单/库存及后台管理功能规格，将已确认规则映射到验收标准。
+- 暂无首版阻塞切片。
 
-## Backlog（未拆解，只是念头）
+## Backlog（未拆解）
 
-- 重建约 100 种演示商品和描述，以 Emoji/Emoji 组合做商品视觉；确定可维护的种子数据格式，不制作真实商品照片。
-- 选定 Transformer 训练/推理框架与本机模型运行方式。
-- 实现并验收购物车、Transformer 结账计算、模拟订单创建及数据持久化的端到端流程。
-- 实现首版后台：无认证地管理商品与库存、查看订单；老板送货后手动完成订单并在此时扣减库存；用可爱文案说明退货需线下联系老板。
+- 可选优化：减少 `validate_matrix` 的 0.05 ms 开销；评估 ORT I/O binding。
+- 可选优化：增补管理员操作日志或后台筛选；当前不在首版范围。
 
 ## Done（整理时清空；git 历史负责归档）
 
-- [x] 安装 AI Native 工作流知识库并通过完整性校验。
-- [x] 完成项目目的、范围与技术栈访谈，撰写首版知识库和 Accepted ADR-0001。
-- [x] 阅读人类提供的 Transformer 加法器设计和 HTML 风格模板；裁决金额精度、订单/库存、后台认证和商品视觉规则。
-- [x] 确认有效 Transformer 输出是唯一成交金额来源；对照加法只诊断差异，不修正或拦截。
-- [x] 确认相对差异超出 ±50% 时显示神经网络提示，Transformer 返回 null 时免单。
-- [x] 实现商品目录浏览切片及 SQLite/FastAPI/React 工具链；类型检查、测试、lint、构建通过。
+- [x] **切片一：购物车、结账与订单**：SQLite `orders`/`order_items`，`POST /api/checkout`，待送货订单预占库存，数量不足按可售量截断，无货商品跳过；所有无货时拒绝下单；Transformer/`tree_sum` 成交金额与结账档位；浏览器 localStorage 购物袋和房间号结账 UI。
+- [x] **切片二：老板后台**：无凭据校验的可爱登录页、订单查询/确认送达/原子扣库存、商品新增编辑、组合 Emoji 图层编辑器与即时预览。
+- [x] **切片三：商品目录扩充**：演示商品 100 种（饮品 25、零食 35、泡面速食 20、日用品 20），由缺失种子增量补入，不覆盖老板修改过的数据。
+- [x] 组合 Emoji 作为整体插画：固定画布、图层变形/折叠/遮罩裁切/叠放；数据库/API 描述与商品卡/后台编辑器支持（Q-013）。
+- [x] 结账档位（Q-008）、对照为零专用标签（Q-011）、tree_sum 当前精度接受（Q-009）、训练结束及 ONNX 部署（Q-010）。
+- [x] ADR-0002 Accepted、ADR-0004 Superseded；部署默认 ONNX Runtime fp32（ADR-0005）。
+- [x] AI Native 工作流知识库、首版商品目录及 React/FastAPI/SQLite 工具链。
+
+## 验收记录
+
+- 后端：`uv run pytest` 76 passed；`uv run ruff check .`、`uv run pyright` 全通过。
+- 前端：`npm run typecheck`、`npm run lint`、`npm test`（15 passed）、`npm run build` 全通过。
+- 提交策略：按神经加法器、商城结账/后台与商品目录切片分别提交（人类要求拆分提交）。

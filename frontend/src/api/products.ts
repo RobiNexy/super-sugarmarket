@@ -2,7 +2,7 @@
  * @spec [[storefront-product-catalog-browsing-and-category-filter]]
  */
 
-import type { Product } from "../types";
+import type { EmojiArt, EmojiLayer, Product } from "../types";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -10,6 +10,51 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function isNonNegativeSafeInteger(value: unknown): value is number {
   return typeof value === "number" && Number.isSafeInteger(value) && value >= 0;
+}
+
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+function isEmojiLayer(value: unknown): value is EmojiLayer {
+  if (!isRecord(value)) return false;
+  const clipValues = [
+    "circle",
+    "ellipse",
+    "rounded",
+    "left_half",
+    "right_half",
+    "top_half",
+    "bottom_half",
+  ];
+  return (
+    typeof value.emoji === "string" &&
+    value.emoji.length > 0 &&
+    isFiniteNumber(value.x) && value.x >= 0 && value.x <= 100 &&
+    isFiniteNumber(value.y) && value.y >= 0 && value.y <= 100 &&
+    isFiniteNumber(value.size) && value.size > 0 && value.size <= 100 &&
+    isFiniteNumber(value.rotate) && value.rotate >= -180 && value.rotate <= 180 &&
+    isFiniteNumber(value.scale_x) && value.scale_x >= 0.2 && value.scale_x <= 2 &&
+    isFiniteNumber(value.scale_y) && value.scale_y >= 0.2 && value.scale_y <= 2 &&
+    isFiniteNumber(value.skew_x) && value.skew_x >= -30 && value.skew_x <= 30 &&
+    isFiniteNumber(value.skew_y) && value.skew_y >= -30 && value.skew_y <= 30 &&
+    isFiniteNumber(value.origin_x) && value.origin_x >= 0 && value.origin_x <= 100 &&
+    isFiniteNumber(value.origin_y) && value.origin_y >= 0 && value.origin_y <= 100 &&
+    isNonNegativeSafeInteger(value.z) && value.z <= 20 &&
+    (value.clip === null ||
+      (typeof value.clip === "string" && clipValues.includes(value.clip)))
+  );
+}
+
+function isEmojiArt(value: unknown): value is EmojiArt {
+  return (
+    isRecord(value) &&
+    value.version === 1 &&
+    Array.isArray(value.layers) &&
+    value.layers.length >= 2 &&
+    value.layers.length <= 12 &&
+    value.layers.every(isEmojiLayer)
+  );
 }
 
 function isProduct(value: unknown): value is Product {
@@ -24,8 +69,10 @@ function isProduct(value: unknown): value is Product {
     value.category.length > 0 &&
     typeof value.description === "string" &&
     (typeof value.emoji === "string" || value.emoji === null) &&
-    isNonNegativeSafeInteger(value.unit_price_fen) &&
+    (value.emoji_art === null || isEmojiArt(value.emoji_art)) &&
+    typeof value.unit_price_yuan === "string" && /^\d+\.\d{2}$/.test(value.unit_price_yuan) &&
     isNonNegativeSafeInteger(value.stock_quantity) &&
+    isNonNegativeSafeInteger(value.available_quantity) &&
     value.is_active === true
   );
 }

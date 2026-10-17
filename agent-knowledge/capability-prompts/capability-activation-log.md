@@ -9,7 +9,16 @@
 2026-10-14 | 裁决差异提示阈值与 null 免单行为 | 无匹配 | 无匹配 | 关闭 Q-006/Q-007；超过 ±50% 提示，null 免单；未写业务代码
 2026-10-14 | 实现商品目录首个全栈切片 | 无匹配 | 无匹配 | React 分类浏览、FastAPI/SQLite 商品 API；3 个 Python 与 8 个前端测试通过；strict/lint/build 全绿
 2026-10-14 | 创建 HTTPS GitHub 仓库并推送项目 | 无匹配 | 无匹配 | 新建公开仓库 RobiNexy/super-sugarmarket；main 已推送；旧 SugarMarket 仓库未改动
+2026-10-14 | 搭建 CUDA 训练环境并训练竖式加法模型 | 无匹配 | 无匹配 | 新增 adder 包、规格、ADR-0002 与环境记录；修复边界采样缺口；ruff/pyright/pytest 全绿
+2026-10-15 | int8 QAT 量化与压缩报告 | 无匹配 | 无匹配 | 新增 quant/qat 模块、规格、ADR-0003 与报告；int8 文件 128.4 KiB；pytest 21 通过，ruff/pyright 全绿
+2026-10-15 | 重做为 CPU 加速的静态 W8A8 int8 推理 | 无匹配 | 无匹配 | 实测动态量化与 8 bit 权重饱和问题；新增 infer/cpu_deploy、规格、ADR-0004 与报告；撤销 ADR-0003 方案；pytest 26 通过，ruff/pyright 全绿
+2026-10-15 | 讨论并确定 ONNX Runtime fp32 小批量部署 | 无匹配 | 无匹配 | 人类批准 onnxruntime/onnx 依赖；新增 onnx_export/onnx_runtime/onnx_bench、规格、ADR-0005 与基准报告；pytest 39 通过，ruff/pyright 全绿
 
+2026-10-15 | 实现神经树形求和 tree_sum 与端到端精度评估 | 无匹配 | 无匹配 | 新增 tree_sum 与评估脚本、规格与报告；pytest 60 通过；100 行整单精确率 97.75%，待人类裁决
+2026-10-16 | 批量裁决结账与后台设计（Q-012）；撰写结账、后台、文案动效规格，订单/API 契约，ADR-0006；未写业务代码 | 无匹配 | 无匹配 | 新增 6 份规格/契约、ADR-0006；更新商品表、商品 API（元字符串）、tree_sum 规格、看板与状态文档 |
+2026-10-17 | 补充组合 Emoji 整体插画设计（Q-013） | 无匹配 | 无匹配 | 更新组合画布/图层格式、商品表/API、目录和后台规格、术语与项目范围；未写业务代码 |
+2026-10-17 | 实现购物袋结账、订单库存、老板后台、组合 Emoji 编辑与 100 种商品目录 | 无匹配 | 无匹配 | 实现 SQLite/FastAPI/React 切片及测试；后端 pytest 76、前端 Vitest 15；lint、类型检查与构建通过 |
+2026-10-16 | 裁决结账三档展示、tree_sum 精度、训练收尾；同步文档 | 无匹配 | 无匹配 | 新增 Q-008–Q-011（Q-011 已裁决为专用标签）；Q-006 取代、Q-007 更新；ADR-0002 Accepted、ADR-0004 Superseded；训练/ONNX/int8 规格与看板、状态文档同步；未改业务代码
 熵增整理时，压缩后的归档摘要行格式：
 
 `ARCHIVE | YYYY-MM-DD..YYYY-MM-DD | 会话数=N | 各包次数=... | 自动路由偏差=... | 无匹配任务类型=...`
