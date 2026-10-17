@@ -22,9 +22,12 @@ __pycache__/
 .mypy_cache/
 .ruff_cache/
 
-# Local SQLite databases (keep seed/source data in versioned text formats)
+# Local SQLite databases (keep seed/source data in versioned text formats);
+# the shop's data file is the exception — it ships with the repo on purpose
+# (see README 背景: the original college dataset was lost because it was never committed).
 *.sqlite
 *.sqlite3
+!backend/data/sugarmarket.sqlite3
 
 # Model training artifacts (checkpoints, reports, logs);
 # the deployed ONNX model is the exception — it ships with the repo.

@@ -156,7 +156,7 @@ sudo systemctl status sugarmarket-api --no-pager
 curl -s http://127.0.0.1:8000/api/products | head -c 200; echo
 ```
 
-看到 JSON 即表示 API 正常，数据库会在首次启动时自动创建在 `/var/lib/sugarmarket/`。
+看到 JSON 即表示 API 正常。数据库随仓库分发（`/opt/sugarmarket/app/backend/data/sugarmarket.sqlite3`），首次启动时会以它为初始数据创建在 `/var/lib/sugarmarket/`；之后的运行数据只存在于 `/var/lib/sugarmarket/`，升级 `git pull` 不会覆盖它。
 
 > `--workers 1` 不可改大：SQLite 只允许一个写者，多 worker 会造成库存判断与订单写入的竞争。
 

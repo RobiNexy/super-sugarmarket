@@ -37,7 +37,7 @@
 |---|---|---|
 | `backend/app/data/products.json` | 是 | 随代码 |
 | `backend/checkpoints/adder-onnx/adder.onnx` | **是**（2026-10-17 起纳入 Git，约 443 KiB） | 随代码克隆获得；升级时 `git pull` 自动更新 |
-| SQLite 数据库文件 | 否 | 首次启动自动创建；路径由 `SUGARMARKET_DB_PATH` 指定 |
+| SQLite 数据库文件 | **是**（2026-10-17 起随仓库分发，纪念原版丢失的数据） | 克隆即得；生产环境仍建议用 `SUGARMARKET_DB_PATH` 放到 `/var/lib/sugarmarket/`，并以仓库中的文件为初始数据 |
 | `frontend/dist/` | 否 | 在部署机或构建机执行 `npm run build` |
 
 数据库默认路径为 `backend/data/sugarmarket.sqlite3`。部署时必须用 `SUGARMARKET_DB_PATH` 改到 `/var/lib/sugarmarket/`，避免代码目录升级时覆盖数据。
