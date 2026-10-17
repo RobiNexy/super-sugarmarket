@@ -68,14 +68,19 @@ describe("catalog helpers", () => {
 });
 
 describe("storefront catalog and checkout", () => {
+  const animate = vi.fn(() => ({ onfinish: null, finished: Promise.resolve() }));
+
   beforeEach(() => {
     vi.stubGlobal("fetch", vi.fn());
     window.localStorage.clear();
+    Element.prototype.animate = animate as unknown as Element["animate"];
   });
 
   afterEach(() => {
     cleanup();
     window.localStorage.clear();
+    animate.mockClear();
+    delete (Element.prototype as { animate?: unknown }).animate;
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });
@@ -145,8 +150,10 @@ describe("storefront catalog and checkout", () => {
     await screen.findByRole("heading", { name: "农夫山泉 550ml" });
     fireEvent.click(screen.getAllByRole("button", { name: "装进红塑料袋 🛍️" })[0]);
     expect(document.querySelector(".flying-emoji")).toBeInTheDocument();
+    expect(animate).toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "老板的红色塑料袋，共1件" }));
     expect(screen.getByText("单价 ¥2.00 / 件")).toBeVisible();
+    expect(document.querySelector(".cart-panel")).toBeInTheDocument();
     expect(window.localStorage.getItem("sugarmarket.cart.v1")).toContain('"quantity":1');
 
     fireEvent.change(screen.getByLabelText("房间号 🚪"), { target: { value: "1208" } });

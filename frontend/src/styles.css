@@ -265,16 +265,13 @@ button {
 .flying-emoji {
   position: fixed;
   z-index: 50;
+  top: 0;
+  left: 0;
   pointer-events: none;
   font-size: 2.5rem;
-  filter: drop-shadow(2px 3px 0 rgb(43 33 64 / 30%));
-  animation: fly-to-red-bag 720ms cubic-bezier(0.3, 0.75, 0.2, 1) forwards;
-}
-
-@keyframes fly-to-red-bag {
-  0% { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(0); }
-  72% { opacity: 1; transform: translate(calc(-50% + var(--fly-mid-x)), calc(-50% + var(--fly-mid-y))) scale(0.72) rotate(280deg); }
-  100% { opacity: 0.1; transform: translate(calc(-50% + var(--fly-x)), calc(-50% + var(--fly-y))) scale(0.18) rotate(520deg); }
+  line-height: 1;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
 }
 
 .admin-entry {
@@ -295,7 +292,39 @@ button {
   padding: 8px 28px 48px;
 }
 
-.cart-panel,
+.cart-panel {
+  position: fixed;
+  z-index: 40;
+  right: 26px;
+  bottom: 118px;
+  width: min(400px, calc(100vw - 28px));
+  max-height: calc(100vh - 150px);
+  overflow-y: auto;
+  border: 3px solid var(--ink);
+  border-radius: 14px 14px 6px 6px;
+  padding: 18px 18px 20px;
+  background:
+    linear-gradient(transparent 0 22px, rgb(255 122 198 / 14%) 22px 23px, transparent 23px),
+    #fff;
+  background-size: 100% 26px;
+  box-shadow: 6px 7px 0 var(--ink);
+  transform-origin: 85% 100%;
+  will-change: transform, opacity;
+}
+
+.cart-panel::before {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  width: 84px;
+  height: 22px;
+  transform: translateX(-50%) rotate(-3deg);
+  border: 2px dashed var(--ink);
+  border-radius: 4px;
+  background: rgb(255 226 120 / 90%);
+  content: "";
+}
+
 .order-result {
   position: relative;
   width: min(760px, 100%);
@@ -1208,6 +1237,11 @@ button {
     font-size: 1.35rem;
   }
 
+  .cart-panel {
+    right: 12px;
+    bottom: 76px;
+  }
+
   .shop-main {
     padding-right: 16px;
     padding-left: 16px;
@@ -1286,10 +1320,5 @@ button {
   .background-doodle,
   .background-squiggle {
     animation: none !important;
-  }
-
-  .flying-emoji {
-    animation: none !important;
-    opacity: 0;
   }
 }

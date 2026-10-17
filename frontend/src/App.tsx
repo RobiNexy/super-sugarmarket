@@ -5,7 +5,7 @@
  * @adr [[ADR-0001-react-typescript-fastapi-pydantic-sqlite-transformer]]
  */
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import type { CSSProperties, MouseEvent as ReactMouseEvent } from "react";
 
@@ -31,17 +31,6 @@ type CatalogState =
   | { status: "loading" }
   | { status: "error" }
   | { status: "ready"; products: Product[]; shuffledProducts: Product[] };
-
-type FlyingEmoji = {
-  key: number;
-  emoji: string;
-  x: number;
-  y: number;
-  deltaX: number;
-  deltaY: number;
-  middleX: number;
-  middleY: number;
-};
 
 const CATEGORY_STYLES: Record<string, string> = {
   饮品: "product-card--drink",
@@ -93,6 +82,135 @@ function productCardStyle(productId: number): CSSProperties {
 function hasProductSticker(productId: number): boolean {
   return productId % 9 === 0 || productId % 17 === 0;
 }
+
+/* Animations run on the compositor through Web Animations API (transform/opacity only).
+ * They are created imperatively, so adding to the bag never re-renders the catalog. */
+function canAnimate(): boolean {
+  return typeof Element.prototype.animate === "function" && !prefersReducedMotion();
+}
+
+function centerOf(element: Element): { x: number; y: number } {
+  const rect = element.getBoundingClientRect();
+  return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+}
+
+function flyProductToBag(source: HTMLElement, bag: HTMLElement, emoji: string): void {
+  if (!canAnimate()) return;
+  const from = centerOf(source);
+  const to = centerOf(bag);
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const node = document.createElement("span");
+  node.className = "flying-emoji";
+  node.setAttribute("aria-hidden", "true");
+  node.textContent = emoji;
+  node.style.left = `${from.x}px`;
+  node.style.top = `${from.y}px`;
+  document.body.appendChild(node);
+  const flight = node.animate(
+    [
+      { transform: "translate(-50%, -50%) scale(1) rotate(0deg)", opacity: 1, offset: 0 },
+      {
+        transform: `translate(calc(-50% + ${dx * 0.5}px), calc(-50% + ${dy * 0.5 - 90}px)) scale(0.95) rotate(170deg)`,
+        opacity: 1,
+        offset: 0.5,
+      },
+      {
+        transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(0.22) rotate(340deg)`,
+        opacity: 0.6,
+        offset: 1,
+      },
+    ],
+    { duration: 620, easing: "cubic-bezier(0.3, 0.6, 0.25, 1)", fill: "forwards" },
+  );
+  flight.onfinish = () => {
+    node.remove();
+    catchInBag(bag);
+  };
+}
+
+function catchInBag(bag: HTMLElement): void {
+  if (!canAnimate()) return;
+  bag.animate(
+    [
+      { transform: "scale(1, 1)" },
+      { transform: "scale(1.12, 0.86) translateY(4px)", offset: 0.22 },
+      { transform: "scale(0.94, 1.1) translateY(-14px) rotate(-4deg)", offset: 0.55 },
+      { transform: "scale(1.03, 0.98) translateY(1px)", offset: 0.8 },
+      { transform: "scale(1, 1)" },
+    ],
+    { duration: 560, easing: "ease-out" },
+  );
+  bag.querySelector<HTMLElement>(".cart-trigger__count")?.animate(
+    [{ transform: "scale(1)" }, { transform: "scale(1.45)", offset: 0.4 }, { transform: "scale(1)" }],
+    { duration: 380, easing: "ease-out" },
+  );
+}
+
+/* The receipt is pulled out of the bag: it starts shrunk at the bag and rises out. */
+function bagOffset(panel: HTMLElement, bag: HTMLElement): { dx: number; dy: number } {
+  const from = centerOf(panel);
+  const to = centerOf(bag);
+  return { dx: to.x - from.x, dy: to.y - from.y };
+}
+
+function pullOutOfBag(panel: HTMLElement, bag: HTMLElement): void {
+  if (!canAnimate()) return;
+  const { dx, dy } = bagOffset(panel, bag);
+  panel.animate(
+    [
+      { transform: `translate(${dx}px, ${dy}px) scale(0.12) rotate(-14deg)`, opacity: 0.2, offset: 0 },
+      { transform: "translate(0, -10px) scale(1.03) rotate(1.5deg)", opacity: 1, offset: 0.72 },
+      { transform: "translate(0, 0) scale(1) rotate(-0.5deg)", opacity: 1 },
+    ],
+    { duration: 560, easing: "cubic-bezier(0.22, 1, 0.36, 1)" },
+  );
+}
+
+function tuckIntoBag(panel: HTMLElement, bag: HTMLElement, onDone: () => void): void {
+  if (!canAnimate()) {
+    onDone();
+    return;
+  }
+  const { dx, dy } = bagOffset(panel, bag);
+  const tuck = panel.animate(
+    [
+      { transform: "translate(0, 0) scale(1) rotate(0deg)", opacity: 1 },
+      { transform: `translate(${dx}px, ${dy}px) scale(0.12) rotate(-14deg)`, opacity: 0 },
+    ],
+    { duration: 420, easing: "cubic-bezier(0.5, 0, 0.75, 0)", fill: "forwards" },
+  );
+  tuck.onfinish = onDone;
+}
+
+type ProductCardProps = {
+  product: Product;
+  onAdd: (product: Product, event: ReactMouseEvent<HTMLButtonElement>) => void;
+};
+
+const ProductCard = memo(function ProductCard({ product, onAdd }: ProductCardProps) {
+  const sticker = hasProductSticker(product.id);
+  return (
+    <article
+      className={`product-card ${CATEGORY_STYLES[product.category] ?? ""} ${sticker ? "product-card--sticker" : ""}`}
+      style={productCardStyle(product.id)}
+    >
+      {sticker && <span className="product-card__sticker">{STICKER_LABELS[product.id % STICKER_LABELS.length]}</span>}
+      <EmojiProductArt product={product} />
+      <h2 className="product-card__name">{product.name}</h2>
+      <p className="product-card__description">{product.description}</p>
+      <p className="product-card__price">{formatPriceYuan(product.unit_price_yuan)}</p>
+      <button
+        className="add-to-cart-button jelly-button"
+        disabled={product.available_quantity === 0}
+        onClick={(event) => onAdd(product, event)}
+        type="button"
+      >
+        {product.available_quantity === 0 ? "暂时卖光啦 🥺" : "装进红塑料袋 🛍️"}
+      </button>
+    </article>
+  );
+});
 
 function BackgroundDoodles() {
   const doodlesRef = useRef<HTMLDivElement>(null);
@@ -186,12 +304,18 @@ function StorefrontApp() {
   const [checkoutPending, setCheckoutPending] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [orderResult, setOrderResult] = useState<CheckoutResult | null>(null);
-  const [flyingEmoji, setFlyingEmoji] = useState<FlyingEmoji | null>(null);
   const bagButtonRef = useRef<HTMLButtonElement>(null);
+  const cartPanelRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     saveCart(cart);
   }, [cart]);
+
+  useLayoutEffect(() => {
+    if (cartOpen && cartPanelRef.current && bagButtonRef.current) {
+      pullOutOfBag(cartPanelRef.current, bagButtonRef.current);
+    }
+  }, [cartOpen]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -225,28 +349,25 @@ function StorefrontApp() {
   );
   const cartCount = cart.reduce((count, line) => count + line.quantity, 0);
 
-  function handleAddToCart(product: Product, event: ReactMouseEvent<HTMLButtonElement>) {
-    const card = event.currentTarget.closest(".product-card");
-    const sourceElement = card?.querySelector<HTMLElement>(
-      ".product-card__emoji-art, .product-card__emoji",
-    );
-    const sourceRect = sourceElement?.getBoundingClientRect() ?? event.currentTarget.getBoundingClientRect();
-    const targetRect = bagButtonRef.current?.getBoundingClientRect();
-    if (targetRect !== undefined) {
-      const deltaX = targetRect.left + targetRect.width / 2 - sourceRect.left - sourceRect.width / 2;
-      const deltaY = targetRect.top + targetRect.height / 2 - sourceRect.top - sourceRect.height / 2;
-      setFlyingEmoji({
-        key: Math.round(performance.now() * 1000),
-        emoji: product.emoji_art?.layers[0]?.emoji ?? product.emoji ?? "🍬",
-        x: sourceRect.left + sourceRect.width / 2,
-        y: sourceRect.top + sourceRect.height / 2,
-        deltaX,
-        deltaY,
-        middleX: deltaX * 0.72,
-        middleY: deltaY * 0.72,
-      });
+  const handleAddToCart = useCallback((product: Product, event: ReactMouseEvent<HTMLButtonElement>) => {
+    const source = event.currentTarget
+      .closest(".product-card")
+      ?.querySelector<HTMLElement>(".product-card__emoji-art, .product-card__emoji");
+    const bag = bagButtonRef.current;
+    if (source && bag) {
+      flyProductToBag(source, bag, product.emoji_art?.layers[0]?.emoji ?? product.emoji ?? "🍬");
     }
     setCart((items) => addCartProduct(items, product.id));
+  }, []);
+
+  function closeCart() {
+    const panel = cartPanelRef.current;
+    const bag = bagButtonRef.current;
+    if (panel && bag) {
+      tuckIntoBag(panel, bag, () => setCartOpen(false));
+    } else {
+      setCartOpen(false);
+    }
   }
 
   async function handleCheckout(event: FormEvent<HTMLFormElement>) {
@@ -280,7 +401,7 @@ function StorefrontApp() {
         aria-label={`老板的红色塑料袋，共${cartCount}件`}
         aria-expanded={cartOpen}
         className="cart-trigger"
-        onClick={() => setCartOpen((open) => !open)}
+        onClick={() => (cartOpen ? closeCart() : setCartOpen(true))}
         ref={bagButtonRef}
         type="button"
       >
@@ -288,32 +409,13 @@ function StorefrontApp() {
         <span className="cart-trigger__label">老板的红色塑料袋</span>
         <span className="cart-trigger__count">{cartCount}</span>
       </button>
-      {flyingEmoji !== null && (
-        <span
-          aria-hidden="true"
-          className="flying-emoji"
-          key={flyingEmoji.key}
-          onAnimationEnd={() => setFlyingEmoji(null)}
-          style={{
-            left: flyingEmoji.x,
-            top: flyingEmoji.y,
-            "--fly-x": `${flyingEmoji.deltaX}px`,
-            "--fly-y": `${flyingEmoji.deltaY}px`,
-            "--fly-mid-x": `${flyingEmoji.middleX}px`,
-            "--fly-mid-y": `${flyingEmoji.middleY}px`,
-          } as CSSProperties}
-        >
-          {flyingEmoji.emoji}
-        </span>
-      )}
 
-      <main className="shop-main">
-        {cartOpen && (
-          <section aria-labelledby="cart-title" className="cart-panel">
+      {cartOpen && (
+        <section aria-labelledby="cart-title" className="cart-panel" ref={cartPanelRef}>
             <div className="cart-panel__heading">
               <h2 id="cart-title">🧾 红色塑料袋里的小票</h2>
-              <button className="plain-button" onClick={() => setCartOpen(false)} type="button">
-                收起来 ✨
+              <button className="plain-button" onClick={closeCart} type="button">
+                塞回袋里 ✨
               </button>
             </div>
             {cart.length === 0 ? (
@@ -379,6 +481,7 @@ function StorefrontApp() {
           </section>
         )}
 
+      <main className="shop-main">
         {orderResult !== null && (
           <section aria-labelledby="order-result-title" className="order-result" role="status">
             <button
@@ -449,29 +552,7 @@ function StorefrontApp() {
           {catalog.status === "ready" && visibleProducts.length > 0 && (
             <div aria-live="polite" className="product-grid">
               {visibleProducts.map((product) => (
-                <article
-                  className={`product-card ${CATEGORY_STYLES[product.category] ?? ""} ${hasProductSticker(product.id) ? "product-card--sticker" : ""}`}
-                  key={product.id}
-                  style={productCardStyle(product.id)}
-                >
-                  {hasProductSticker(product.id) && (
-                    <span className="product-card__sticker">
-                      {STICKER_LABELS[product.id % STICKER_LABELS.length]}
-                    </span>
-                  )}
-                  <EmojiProductArt product={product} />
-                  <h2 className="product-card__name">{product.name}</h2>
-                  <p className="product-card__description">{product.description}</p>
-                  <p className="product-card__price">{formatPriceYuan(product.unit_price_yuan)}</p>
-                  <button
-                    className="add-to-cart-button jelly-button"
-                    disabled={product.available_quantity === 0}
-                    onClick={(event) => handleAddToCart(product, event)}
-                    type="button"
-                  >
-                    {product.available_quantity === 0 ? "暂时卖光啦 🥺" : "装进红塑料袋 🛍️"}
-                  </button>
-                </article>
+                <ProductCard key={product.id} onAdd={handleAddToCart} product={product} />
               ))}
             </div>
           )}
